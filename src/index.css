@@ -23,3 +23,4 @@ button { font-family: inherit; }
 input, textarea { font-family: inherit; }
 
 * { -webkit-tap-highlight-color: transparent; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
