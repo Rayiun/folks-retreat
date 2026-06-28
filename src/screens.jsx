@@ -506,32 +506,16 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
 
 // ── PeopleManager ─────────────────────────────────────────
 export function PeopleManager({ store, open, onClose }) {
-  const [name, setName] = useState('');
-  const add = () => { const n = name.trim(); if (n) { store.addPerson(n); setName(''); } };
   return (
     <Sheet open={open} onClose={onClose} title="Members">
-      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Add a member…"
-          onKeyDown={e => e.key === 'Enter' && add()} style={{
-          flex: 1, boxSizing: 'border-box', padding: '12px 14px', borderRadius: 14, border: '1.5px solid var(--line)',
-          background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', fontSize: 15.5 }} />
-        <Btn icon="plus" onClick={add} disabled={!name.trim()}>Add</Btn>
-      </div>
       <div>
         {store.people.map((p, i) => (
           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px',
             borderBottom: i < store.people.length - 1 ? '1px solid var(--line)' : 'none' }}>
             <Avatar person={p} size={38} />
             <div style={{ flex: 1, fontWeight: 600, color: 'var(--ink)', fontSize: 15 }}>{p.name}</div>
-            <button onClick={() => { if (confirm(`Remove ${p.name}?`)) store.removePerson(p.id); }} style={{ border: 'none', background: 'transparent',
-              cursor: 'pointer', color: 'var(--faint)', padding: 6, display: 'flex' }}>
-              <Icon name="trash" size={18} sw={2} />
-            </button>
           </div>
         ))}
-      </div>
-      <div style={{ paddingTop: 18, marginTop: 18, borderTop: '1px solid var(--line)', textAlign: 'center' }}>
-        <Btn variant="quiet" size="sm" onClick={() => { if (confirm('Reset all data to the original sample?')) { store.resetAll(); onClose(); } }}>Reset all data</Btn>
       </div>
     </Sheet>
   );
