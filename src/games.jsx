@@ -888,12 +888,10 @@ export function GamesScreen({ store }) {
     <div style={{ padding: '4px 18px 28px' }}>
       <PageHead title="The Arena" sub="Bragging rights, officially logged!" />
       <div style={{ marginBottom: 18 }}>
-        <Segment value={cat} options={[{ value: 'board', label: 'Board' }, { value: 'fifa', label: 'FIFA' }, { value: 'stats', label: 'Stats' }]} onChange={v => { setCat(v); setShowAll(false); }} />
+        <Segment value={cat} options={[{ value: 'board', label: 'Board Games' }, { value: 'fifa', label: 'FIFA' }]} onChange={v => { setCat(v); setShowAll(false); }} />
       </div>
 
-      {cat === 'stats' ? (
-        <GamesStatsTab store={store} onPlayer={openPlayer} />
-      ) : standings.length > 0 ? (
+      {standings.length > 0 ? (
         <>
           <Podium entries={standings} onPlayer={openPlayer} />
           {rest.length > 0 && (
@@ -922,18 +920,16 @@ export function GamesScreen({ store }) {
         </Card>
       )}
 
-      {cat !== 'stats' && (
+      <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
+        Log a {cat === 'fifa' ? 'FIFA' : 'board'} match
+      </Btn>
+
+      <RivalriesSection store={store} cat={cat} />
+
+      {recent.length > 0 && (
         <>
-          <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
-            Log a {cat === 'fifa' ? 'FIFA' : 'board'} match
-          </Btn>
-          <RivalriesSection store={store} cat={cat} />
-          {recent.length > 0 && (
-            <>
-              <SectionTitle>Recent results</SectionTitle>
-              <DayGroups store={store} games={recent} onPlayer={openPlayer} onEdit={openEdit} />
-            </>
-          )}
+          <SectionTitle>Recent results</SectionTitle>
+          <DayGroups store={store} games={recent} onPlayer={openPlayer} onEdit={openEdit} />
         </>
       )}
 
