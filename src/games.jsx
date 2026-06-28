@@ -628,40 +628,36 @@ function GamePlayerSheet({ store, person, open, onClose }) {
 }
 
 function DayGroups({ store, games, onPlayer, onEdit }) {
-  const [openDate, setOpenDate] = useState(null);
+  const [selected, setSelected] = useState(null);
   const grouped = games.reduce((acc, g) => { (acc[g.date] = acc[g.date] || []).push(g); return acc; }, {});
   const dates = Object.keys(grouped).sort((a, b) => (a < b ? 1 : -1));
+  const selectedGames = selected ? (grouped[selected] || []) : [];
 
   return (
     <>
       {dates.map(date => {
         const gs = grouped[date];
-        const expanded = openDate === date;
         const players = [...new Set(gs.flatMap(g => g.format === 'teams' ? [...(g.teamA||[]), ...(g.teamB||[])] : (g.players||[])))];
         return (
-          <div key={date} style={{ marginBottom: 10 }}>
-            <Card onClick={() => setOpenDate(expanded ? null : date)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }} pad={13}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{fmtDate(date)}</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{gs.length} {gs.length === 1 ? 'game' : 'games'}</div>
-              </div>
-              <div style={{ display: 'flex' }}>
-                {players.slice(0, 5).map((id, i) => (
-                  <span key={id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
-                    <Avatar person={store.personById(id)} size={26} />
-                  </span>
-                ))}
-              </div>
-              <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={16} sw={2.2} color="var(--faint)" />
-            </Card>
-            {expanded && (
-              <div style={{ paddingTop: 6 }}>
-                {gs.map(g => <MatchRow key={g.id} store={store} game={g} onPlayer={onPlayer} onEdit={onEdit} />)}
-              </div>
-            )}
-          </div>
+          <Card key={date} onClick={() => setSelected(date)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }} pad={13}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{fmtDate(date)}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{gs.length} {gs.length === 1 ? 'game' : 'games'}</div>
+            </div>
+            <div style={{ display: 'flex' }}>
+              {players.slice(0, 5).map((id, i) => (
+                <span key={id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
+                  <Avatar person={store.personById(id)} size={26} />
+                </span>
+              ))}
+            </div>
+            <Icon name="chevron-right" size={16} sw={2.2} color="var(--faint)" />
+          </Card>
         );
       })}
+      <Sheet open={!!selected} onClose={() => setSelected(null)} title={selected ? fmtDate(selected) : ''}>
+        {selectedGames.map(g => <MatchRow key={g.id} store={store} game={g} onPlayer={id => { setSelected(null); onPlayer(id); }} onEdit={g => { setSelected(null); onEdit(g); }} />)}
+      </Sheet>
     </>
   );
 }
