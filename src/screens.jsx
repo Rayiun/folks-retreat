@@ -320,24 +320,28 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
         <Segment value={mode} onChange={setMode} options={[{ value: 'hosted', label: 'Hosting' }, { value: 'attended', label: 'Attended' }, { value: 'fetched', label: 'Fetched' }]} />
       </div>
 
-      {rows.map((s, i) => (
-        <div key={s.person.id} onClick={() => openProfile(s.person)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px', cursor: 'pointer',
-          borderBottom: i < rows.length - 1 ? '1px solid var(--line)' : 'none' }}>
-          <div style={{ width: 22, textAlign: 'center', fontFamily: 'var(--display)', fontWeight: 700, fontSize: 15,
-            color: i < 3 ? medals[i] : 'var(--faint)' }}>{i + 1}</div>
-          <Avatar person={s.person} size={38} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 15, letterSpacing: -0.2 }}>{s.person.name}</div>
-              <div style={{ color: 'var(--faint)', fontSize: 11 }}>{s.sub}</div>
+      {rows.map((s, i) => {
+        const rank = rows.findIndex(r => r.val === s.val) + 1;
+        const medalIdx = rank - 1;
+        return (
+          <div key={s.person.id} onClick={() => openProfile(s.person)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px', cursor: 'pointer',
+            borderBottom: i < rows.length - 1 ? '1px solid var(--line)' : 'none' }}>
+            <div style={{ width: 22, textAlign: 'center', fontFamily: 'var(--display)', fontWeight: 700, fontSize: 15,
+              color: medalIdx < 3 ? medals[medalIdx] : 'var(--faint)' }}>{rank}</div>
+            <Avatar person={s.person} size={38} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 15, letterSpacing: -0.2 }}>{s.person.name}</div>
+                <div style={{ color: 'var(--faint)', fontSize: 11 }}>{s.sub}</div>
+              </div>
+              <div style={{ height: 6, borderRadius: 99, background: 'var(--sunken)', marginTop: 6, overflow: 'hidden' }}>
+                <div style={{ width: `${(s.val / max) * 100}%`, height: '100%', borderRadius: 99, background: barColor, transition: 'width .4s' }} />
+              </div>
             </div>
-            <div style={{ height: 6, borderRadius: 99, background: 'var(--sunken)', marginTop: 6, overflow: 'hidden' }}>
-              <div style={{ width: `${(s.val / max) * 100}%`, height: '100%', borderRadius: 99, background: barColor, transition: 'width .4s' }} />
-            </div>
+            <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 19, color: 'var(--ink)', minWidth: 24, textAlign: 'right' }}>{s.val}</div>
           </div>
-          <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 19, color: 'var(--ink)', minWidth: 24, textAlign: 'right' }}>{s.val}</div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
