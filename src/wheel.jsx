@@ -323,7 +323,7 @@ export function WheelScreen({ store }) {
             <Btn icon={saved ? 'check' : 'plus'} disabled={saved}
               onClick={() => { store.addFetch(winner.id); setSaved(true); }}
               variant={saved ? 'soft' : 'primary'} size="lg" style={{ width: '100%', marginBottom: 10 }}>
-              {saved ? 'Saved to the fetch tally' : 'Save as this week\'s fetch'}
+              {saved ? 'Saved to the fetch tally' : "Save as the night's fetcher"}
             </Btn>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <Btn variant="ghost" onClick={() => setShowResult(false)} style={{ flex: 1 }}>Done</Btn>
