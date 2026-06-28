@@ -88,7 +88,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         <div style={{ width: 1, height: 36, background: 'var(--line)', margin: '0 18px', flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--faint)', fontStyle: 'italic', lineHeight: 1.4 }}>
-            The World's Least Productive Meeting
+            The World's Least Productive Meetings
           </div>
         </div>
       </div>
