@@ -457,7 +457,7 @@ function LocalAvatarStack({ ids, personById, size = 22, onPlayer }) {
   );
 }
 
-function MatchRow({ store, game, onPlayer, onDelete, onDuplicate }) {
+function MatchRow({ store, game, onPlayer, onDelete }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const pById = store.personById;
   const isTeams = game.format === 'teams';
@@ -508,9 +508,6 @@ function MatchRow({ store, game, onPlayer, onDelete, onDuplicate }) {
         {body}
         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
           <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{fmtDateShort(game.date)}</span>
-          <button onClick={() => onDuplicate(game)} aria-label="Duplicate match" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, color: 'var(--faint)', display: 'flex' }}>
-            <Icon name="copy" size={15} sw={1.9} />
-          </button>
           <button onClick={() => setConfirmOpen(true)} aria-label="Delete match" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, color: 'var(--faint)', display: 'flex' }}>
             <Icon name="trash" size={15} sw={1.9} />
           </button>
@@ -648,7 +645,7 @@ export function GamesScreen({ store }) {
         <>
           <SectionTitle>Recent results</SectionTitle>
           {recent.map(g => (
-            <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onDelete={store.deleteGame} onDuplicate={(g) => store.addGame({ cat: g.cat, format: g.format, date: g.date, title: g.title, players: g.players, winnerId: g.winnerId, teamA: g.teamA, teamB: g.teamB, winner: g.winner, score: g.score })} />
+            <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onDelete={store.deleteGame} />
           ))}
         </>
       )}
