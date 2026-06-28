@@ -48,9 +48,7 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
           <Avatar person={host} size={46} />
         </div>
       ) : (
-        <div style={{ width: 46, height: 46, borderRadius: 12, flexShrink: 0, background: 'var(--bg)', overflow: 'hidden' }}>
-          <img src="/app-icon.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} />
-        </div>
+        <img src="/app-icon.png" alt="" style={{ width: 46, height: 46, borderRadius: 12, flexShrink: 0, objectFit: 'cover' }} />
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 16, letterSpacing: -0.2 }}>
