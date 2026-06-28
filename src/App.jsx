@@ -110,7 +110,7 @@ export default function App() {
   const store = useStore();
   const [authed] = useState(true);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem('fr_theme') || 'light');
-  const [tab, setTab] = useState(() => localStorage.getItem('fr-tab') || 'home');
+  const [tab, setTab] = useState(() => sessionStorage.getItem('fr-tab') || 'home');
   const [editor, setEditor] = useState({ open: false, editing: null, draft: null });
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [profile, setProfile] = useState({ open: false, person: null });
@@ -141,7 +141,7 @@ export default function App() {
   };
   const closeEditor = () => setEditor(e => ({ ...e, open: false }));
   const openProfile = (person) => { if (person) setProfile({ open: true, person }); };
-  const goTo = (id) => { setTab(id); localStorage.setItem('fr-tab', id); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
+  const goTo = (id) => { setTab(id); sessionStorage.setItem('fr-tab', id); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
 
   let screen;
   if (tab === 'home') screen = <HomeScreen store={store} openEditor={openEditor} goTo={goTo} openProfile={openProfile} isDark={isDark} toggleTheme={toggleTheme} />;
