@@ -758,6 +758,116 @@ function RivalriesSection({ store, cat }) {
   );
 }
 
+function StatTile({ label, value, sub }) {
+  return (
+    <div style={{ background: 'var(--sunken)', borderRadius: 16, padding: '14px 16px' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 800, color: 'var(--ink)', lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function GamesStatsTab({ store, onPlayer }) {
+  const { people, games } = store;
+  const allGames = games || [];
+
+  const boardGames = allGames.filter(g => g.cat === 'board');
+  const fifaGames  = allGames.filter(g => g.cat === 'fifa');
+
+  // most played board game title
+  const titleCount = {};
+  boardGames.forEach(g => { if (g.title) titleCount[g.title] = (titleCount[g.title] || 0) + 1; });
+  const topTitle = Object.entries(titleCount).sort((a, b) => b[1] - a[1])[0];
+
+  // most wins overall
+  const wins = {};
+  allGames.forEach(g => {
+    const { winners } = matchSides(g);
+    winners.forEach(id => { wins[id] = (wins[id] || 0) + 1; });
+  });
+  const topWinner = people.map(p => ({ p, w: wins[p.id] || 0 })).sort((a, b) => b.w - a.w)[0];
+
+  // most games played
+  const played = {};
+  allGames.forEach(g => matchSides(g).players.forEach(id => { played[id] = (played[id] || 0) + 1; }));
+  const topPlayed = people.map(p => ({ p, n: played[p.id] || 0 })).sort((a, b) => b.n - a.n)[0];
+
+  // biggest rivalry
+  const tagged = allGames.map(g => ({ ...g, cat: 'all' }));
+  const biggestRivalry = rivalryStats(tagged, 'all')[0];
+
+  // most one-sided
+  const oneSided = [...rivalryStats(tagged, 'all')]
+    .filter(r => r.total >= 3)
+    .sort((a, b) => {
+      const diffA = Math.abs((Object.values(a.wins)[0] || 0) - (Object.values(a.wins)[1] || 0));
+      const diffB = Math.abs((Object.values(b.wins)[0] || 0) - (Object.values(b.wins)[1] || 0));
+      return diffB - diffA;
+    })[0];
+
+  const pById = store.personById;
+
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+        <StatTile label="Total games" value={allGames.length} sub={`${boardGames.length} board · ${fifaGames.length} FIFA`} />
+        <StatTile label="Top winner" value={topWinner?.p ? topWinner.p.name.split(' ')[0] : '—'} sub={topWinner?.w ? `${topWinner.w} wins` : ''} />
+        <StatTile label="Most active" value={topPlayed?.p ? topPlayed.p.name.split(' ')[0] : '—'} sub={topPlayed?.n ? `${topPlayed.n} games` : ''} />
+        <StatTile label="Fav game" value={topTitle ? topTitle[0] : '—'} sub={topTitle ? `played ${topTitle[1]}×` : 'No board games yet'} />
+      </div>
+
+      {biggestRivalry && (() => {
+        const [a, b] = biggestRivalry.ids.map(pById).filter(Boolean);
+        if (!a || !b) return null;
+        const wA = biggestRivalry.wins[a.id] || 0, wB = biggestRivalry.wins[b.id] || 0;
+        return (
+          <Card pad={14} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 10 }}>Biggest rivalry</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button type="button" onClick={() => onPlayer(a)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={a} size={40} /></button>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 6 }}>
+                  <span>{a.name}</span><span>{b.name}</span>
+                </div>
+                <div style={{ height: 7, borderRadius: 99, background: 'var(--line)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${Math.round(wA / biggestRivalry.total * 100)}%`, background: 'var(--accent)', borderRadius: 99 }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginTop: 5 }}>
+                  <span>{wA} wins</span><span style={{ color: 'var(--faint)' }}>{biggestRivalry.total} games</span><span>{wB} wins</span>
+                </div>
+              </div>
+              <button type="button" onClick={() => onPlayer(b)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={b} size={40} /></button>
+            </div>
+          </Card>
+        );
+      })()}
+
+      {oneSided && (() => {
+        const [a, b] = oneSided.ids.map(pById).filter(Boolean);
+        if (!a || !b) return null;
+        const wA = oneSided.wins[a.id] || 0, wB = oneSided.wins[b.id] || 0;
+        const leader = wA > wB ? a : b;
+        const loser  = wA > wB ? b : a;
+        const lw = Math.max(wA, wB), ll = Math.min(wA, wB);
+        return (
+          <Card pad={14} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 8 }}>Most one-sided</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button type="button" onClick={() => onPlayer(leader)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={leader} size={40} /></button>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{leader.name} <span style={{ color: 'var(--accent)' }}>{lw}</span> – <span style={{ color: 'var(--muted)' }}>{ll}</span> {loser.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 3 }}>{oneSided.total} games played</div>
+              </div>
+              <button type="button" onClick={() => onPlayer(loser)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={loser} size={40} /></button>
+            </div>
+          </Card>
+        );
+      })()}
+    </div>
+  );
+}
+
 export function GamesScreen({ store }) {
   const { people, games } = store;
   const [cat, setCat] = useState('board');
@@ -778,10 +888,12 @@ export function GamesScreen({ store }) {
     <div style={{ padding: '4px 18px 28px' }}>
       <PageHead title="The Arena" sub="Bragging rights, officially logged!" />
       <div style={{ marginBottom: 18 }}>
-        <Segment value={cat} options={[{ value: 'board', label: 'Board Games' }, { value: 'fifa', label: 'FIFA' }]} onChange={v => { setCat(v); setShowAll(false); }} />
+        <Segment value={cat} options={[{ value: 'board', label: 'Board' }, { value: 'fifa', label: 'FIFA' }, { value: 'stats', label: 'Stats' }]} onChange={v => { setCat(v); setShowAll(false); }} />
       </div>
 
-      {standings.length > 0 ? (
+      {cat === 'stats' ? (
+        <GamesStatsTab store={store} onPlayer={openPlayer} />
+      ) : standings.length > 0 ? (
         <>
           <Podium entries={standings} onPlayer={openPlayer} />
           {rest.length > 0 && (
@@ -810,16 +922,18 @@ export function GamesScreen({ store }) {
         </Card>
       )}
 
-      <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
-        Log a {cat === 'fifa' ? 'FIFA' : 'board'} match
-      </Btn>
-
-      <RivalriesSection store={store} cat={cat} />
-
-      {recent.length > 0 && (
+      {cat !== 'stats' && (
         <>
-          <SectionTitle>Recent results</SectionTitle>
-          <DayGroups store={store} games={recent} onPlayer={openPlayer} onEdit={openEdit} />
+          <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
+            Log a {cat === 'fifa' ? 'FIFA' : 'board'} match
+          </Btn>
+          <RivalriesSection store={store} cat={cat} />
+          {recent.length > 0 && (
+            <>
+              <SectionTitle>Recent results</SectionTitle>
+              <DayGroups store={store} games={recent} onPlayer={openPlayer} onEdit={openEdit} />
+            </>
+          )}
         </>
       )}
 
