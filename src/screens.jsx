@@ -43,12 +43,22 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
   const mvp = nightMVP(week.date, store.games, store.personById);
   return (
     <Card onClick={() => onEdit(week)} style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }} pad={14}>
-      <div onClick={onAvatar ? (e) => { e.stopPropagation(); onAvatar(host); } : undefined} style={{ cursor: onAvatar ? 'pointer' : 'default' }}>
-        <Avatar person={host} size={46} />
-      </div>
+      {host ? (
+        <div onClick={onAvatar ? (e) => { e.stopPropagation(); onAvatar(host); } : undefined} style={{ cursor: onAvatar ? 'pointer' : 'default' }}>
+          <Avatar person={host} size={46} />
+        </div>
+      ) : (
+        <div style={{ display: 'flex', width: 46, height: 46, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {(week.attendees || []).slice(0, 3).map((id, i) => (
+            <span key={id} style={{ marginLeft: i === 0 ? 0 : -10, zIndex: i }}>
+              <Avatar person={store.personById(id)} size={26} />
+            </span>
+          ))}
+        </div>
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 16, letterSpacing: -0.2 }}>
-          {host ? host.name : 'No host'}
+          {host ? host.name : 'Collective Failure'}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, color: 'var(--muted)', fontSize: 13 }}>
           <Icon name="calendar" size={13} sw={2} /> {fmtDate(week.date)}
