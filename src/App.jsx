@@ -108,7 +108,7 @@ function TabBar({ active, onChange }) {
 
 export default function App() {
   const store = useStore();
-  const [authed, setAuthed] = useState(() => localStorage.getItem(GATE_KEY) === '1');
+  const [authed] = useState(true);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem('fr_theme') || 'light');
   const [tab, setTab] = useState('home');
   const [editor, setEditor] = useState({ open: false, editing: null, draft: null });
