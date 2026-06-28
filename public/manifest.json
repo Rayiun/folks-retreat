@@ -3,8 +3,8 @@
   "short_name": "Folk's Retreat",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#eab932",
-  "theme_color": "#eab932",
+  "background_color": "#f5ede0",
+  "theme_color": "#f5ede0",
   "icons": [
     { "src": "/app-icon.png", "sizes": "512x512", "type": "image/png" }
   ]
