@@ -264,8 +264,12 @@ export function awards(people, weeks, fetches, games) {
   const winnerList = people.map(p => ({ person: p, wins: wins[p.id] || 0 })).filter(x => x.wins > 0).sort((a, b) => b.wins - a.wins);
   const topWinners = winnerList.length > 0 ? winnerList.filter(x => x.wins === winnerList[0].wins) : [];
 
+  const attendList = people.map(p => ({ person: p, ...attendanceInfo(p, weeks) })).filter(x => x.attended > 0).sort((a, b) => b.attended - a.attended);
+  const topAttendants = attendList.length > 0 ? attendList.filter(x => x.attended === attendList[0].attended) : [];
+
   const out = [];
   if (topHosts.length) out.push({ key: 'host', label: 'Top Host', sub: topHosts[0].hosted + ' nights', people: topHosts.map(s => s.person), icon: 'crown' });
+  if (topAttendants.length) out.push({ key: 'attend', label: 'Top Attendant', sub: topAttendants[0].attended + ' nights', people: topAttendants.map(x => x.person), icon: 'users' });
   if (loyal) out.push({ key: 'loyal', label: 'Most Loyal', sub: loyal.rate + '% shows', people: [loyal.person], icon: 'trophy' });
   if (topFetchers.length) out.push({ key: 'fetch', label: 'Top Fetcher', sub: topFetchers[0].fetched + ' runs', people: topFetchers.map(s => s.person), icon: 'shuffle' });
   if (topWinners.length) out.push({ key: 'winner', label: 'Top Winner', sub: topWinners[0].wins + ' wins', people: topWinners.map(x => x.person), icon: 'swords' });
