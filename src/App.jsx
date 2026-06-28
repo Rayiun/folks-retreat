@@ -4,6 +4,17 @@ import { THEMES, themeVars, Icon } from './ui.jsx';
 import { HomeScreen, HistoryScreen, StatsScreen, WeekEditor, PeopleManager, ProfileSheet, ShareSheet } from './screens.jsx';
 import { GamesScreen } from './games.jsx';
 import { WheelScreen } from './wheel.jsx';
+import { DesktopApp } from './Desktop.jsx';
+
+function useIsDesktop() {
+  const [desk, setDesk] = useState(() => window.innerWidth >= 1024);
+  useEffect(() => {
+    const fn = () => setDesk(window.innerWidth >= 1024);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+  return desk;
+}
 
 const GATE_KEY = 'fr_authed';
 const PASSCODE = '2013';
@@ -106,6 +117,7 @@ function TabBar({ active, onChange }) {
 
 export default function App() {
   const store = useStore();
+  const isDesktop = useIsDesktop();
   const [authed] = useState(true);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem('fr_theme') || 'light');
   const [tab, setTab] = useState(() => sessionStorage.getItem('fr-tab') || 'home');
@@ -151,6 +163,12 @@ export default function App() {
   const closeEditor = () => setEditor(e => ({ ...e, open: false }));
   const openProfile = (person) => { if (person) setProfile({ open: true, person }); };
   const goTo = (id) => { setTab(id); sessionStorage.setItem('fr-tab', id); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
+
+  if (isDesktop) return (
+    <div style={{ ...vars, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", height: '100dvh', background: 'var(--bg)' }}>
+      <DesktopApp store={store} isDark={isDark} toggleTheme={toggleTheme} />
+    </div>
+  );
 
   let screen;
   if (tab === 'home') screen = <HomeScreen store={store} openEditor={openEditor} goTo={goTo} openProfile={openProfile} isDark={isDark} toggleTheme={toggleTheme} />;
