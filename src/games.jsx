@@ -443,27 +443,48 @@ const PODIUM_META = {
 };
 
 function Podium({ entries, onPlayer }) {
+  // Build dense-ranked groups: [{rank, entries[]}]
+  const groups = [];
+  let currentRank = 1;
+  for (let i = 0; i < entries.length && groups.length < 3;) {
+    const val = entries[i].won;
+    const tied = [];
+    while (i < entries.length && entries[i].won === val) { tied.push(entries[i]); i++; }
+    groups.push({ rank: currentRank, entries: tied });
+    currentRank += tied.length;
+  }
+  // Pad to 3 slots
+  while (groups.length < 3) groups.push(null);
+  const [g2, g1, g3] = [groups[1], groups[0], groups[2]];
+
   return (
     <Card pad={16} style={{ marginBottom: 18, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, var(--accent-soft), transparent 55%)', opacity: 0.45, pointerEvents: 'none' }} />
       <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 10 }}>
-        {[2, 1, 3].map(rank => {
-          const entry = entries[rank - 1];
-          if (!entry) return <div key={rank} style={{ flex: 1 }} />;
-          const m = PODIUM_META[rank];
-          const p = entry.person;
+        {[g2, g1, g3].map((group, slotIdx) => {
+          const displayRank = [2, 1, 3][slotIdx];
+          const m = PODIUM_META[displayRank];
+          if (!group) return <div key={displayRank} style={{ flex: 1 }} />;
+          const isActualRank = group.rank === displayRank || (displayRank === 1 && group.rank === 1);
           return (
-            <button key={rank} onClick={() => onPlayer(p)} style={{ flex: 1, border: 'none', background: 'none', cursor: 'pointer',
-              padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <TeamMark person={p} size={m.av} ring={m.tone} crown={rank === 1} />
-              <div style={{ fontSize: rank === 1 ? 14 : 12.5, fontWeight: 700, color: 'var(--ink)', maxWidth: '100%',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, marginTop: -2 }}>{entry.won}–{entry.lost}</div>
+            <div key={displayRank} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                {group.entries.map((e, i) => (
+                  <button key={e.person.id} onClick={() => onPlayer(e.person)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, marginLeft: i === 0 ? 0 : -12 }}>
+                    <TeamMark person={e.person} size={group.entries.length > 1 ? Math.round(m.av * 0.75) : m.av} ring={m.tone} crown={group.rank === 1} />
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: displayRank === 1 ? 14 : 12.5, fontWeight: 700, color: 'var(--ink)', maxWidth: '100%',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                {group.entries.map(e => surnameOf(e.person.name)).join(', ')}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, marginTop: -2 }}>{group.entries[0].won}W</div>
               <div style={{ width: '100%', height: m.ped, borderRadius: '11px 11px 0 0', background: m.pedBg, marginTop: 2,
                 display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 6 }}>
-                <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: rank === 1 ? 20 : 16, color: m.tone }}>{rank}</span>
+                <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: displayRank === 1 ? 20 : 16, color: m.tone }}>{group.rank}</span>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
