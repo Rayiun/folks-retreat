@@ -316,8 +316,8 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
 }
 
 // ── DateField ─────────────────────────────────────────────
-export function DateField({ value, onChange }) {
-  const [open, setOpen] = useState(false);
+export function DateField({ value, onChange, autoOpen = false }) {
+  const [open, setOpen] = useState(autoOpen);
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
   const ref = useRef(null);
