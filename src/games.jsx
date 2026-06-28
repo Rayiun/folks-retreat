@@ -133,12 +133,16 @@ function QuickDate({ value, onChange }) {
       background: active ? 'var(--accent)' : 'var(--sunken)', color: active ? 'var(--accent-ink)' : 'var(--muted)' }}>{label}</button>
   );
   return (
-    <div style={{ marginBottom: showCal ? 0 : 0 }}>
+    <div style={{ position: 'relative' }}>
+      {showCal && (
+        <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, zIndex: 10, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 -4px 24px rgba(0,0,0,0.12)', padding: 12 }}>
+          <DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen />
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8 }}>
         {pill('Today', !customActive, () => { onChange(TODAY_ISO); setShowCal(false); })}
         {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, () => setShowCal(true))}
       </div>
-      {showCal && <div style={{ marginTop: 10 }}><DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen /></div>}
     </div>
   );
 }
@@ -279,11 +283,6 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
         </button>
       </div>
 
-      {/* date picker — top so calendar is always visible */}
-      <div style={{ marginBottom: 16 }}>
-        <QuickDate value={date} onChange={setDate} />
-      </div>
-
       {/* game name input — board only */}
       {cat === 'board' && (
         <div style={{ marginBottom: 18, position: 'relative' }}>
@@ -420,6 +419,10 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
           )}
         </div>
       )}
+
+      <div style={{ marginTop: 20, marginBottom: 4 }}>
+        <QuickDate value={date} onChange={setDate} />
+      </div>
 
       <Btn variant="primary" size="lg" icon="check" disabled={!canSave} onClick={save} style={{ width: '100%', marginTop: 4 }}>
         Save result
