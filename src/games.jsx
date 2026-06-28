@@ -925,12 +925,16 @@ export function GamesScreen({ store }) {
           )}
           <Sheet open={showAll} onClose={() => setShowAll(false)} title="Full standings">
             <Card pad={8}>
-              {standings.map((e, i) => (
-                <div key={e.person.id}>
-                  {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
-                  <StandingRow rank={i + 1} entry={e} onClick={() => { setShowAll(false); openPlayer(e.person); }} />
-                </div>
-              ))}
+              {standings.map((e, i) => {
+                const uniqueVals = [...new Set(standings.map(s => s.won))].sort((a, b) => b - a);
+                const rank = uniqueVals.indexOf(e.won) + 1;
+                return (
+                  <div key={e.person.id}>
+                    {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
+                    <StandingRow rank={rank} entry={e} onClick={() => { setShowAll(false); openPlayer(e.person); }} />
+                  </div>
+                );
+              })}
             </Card>
           </Sheet>
         </>
