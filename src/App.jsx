@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useStore } from './store.js';
 import { THEMES, themeVars, Icon } from './ui.jsx';
 import { HomeScreen, HistoryScreen, StatsScreen, WeekEditor, PeopleManager, ProfileSheet, ShareSheet } from './screens.jsx';
@@ -117,6 +117,13 @@ export default function App() {
 
   const isDark = THEMES[themeKey]?.dark ?? false;
   const vars = themeVars(themeKey);
+
+  useEffect(() => {
+    const color = themeKey === 'dark' ? '#2e2a23' : '#f5ede0';
+    document.body.style.background = color;
+    document.documentElement.style.background = color;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+  }, [themeKey]);
 
   if (!authed) return <AppGate themeVars={vars} onUnlock={() => { localStorage.setItem(GATE_KEY, '1'); setAuthed(true); }} />;
 
