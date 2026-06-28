@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { surnameOf, fmtDateShort, fmtDate, matchSides, gameStats, recentGames, playerGameRecord, playerMatches } from './store.js';
+import { surnameOf, fmtDateShort, fmtDate, matchSides, gameStats, recentGames, playerGameRecord, playerMatches, rivalryStats } from './store.js';
 import { Avatar, Icon, Sheet, Btn, Card, Segment, ConfirmDelete } from './ui.jsx';
 import { SectionTitle, PageHead, DateField } from './screens.jsx';
 
@@ -662,6 +662,102 @@ function DayGroups({ store, games, onPlayer, onEdit }) {
   );
 }
 
+function RivalryBar({ wins, total, idA, idB }) {
+  const pct = total === 0 ? 50 : Math.round((wins[idA] || 0) / total * 100);
+  return (
+    <div style={{ height: 6, borderRadius: 99, background: 'var(--line)', overflow: 'hidden', margin: '8px 0' }}>
+      <div style={{ height: '100%', width: `${pct}%`, background: 'var(--accent)', borderRadius: 99, transition: 'width .4s' }} />
+    </div>
+  );
+}
+
+function RivalriesSection({ store, cat }) {
+  const { people, games } = store;
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [pickA, setPickA] = useState(null);
+  const [pickB, setPickB] = useState(null);
+  const pById = store.personById;
+
+  const rivalries = rivalryStats(games, cat);
+  const top = rivalries.slice(0, 3);
+
+  const h2h = pickA && pickB ? rivalries.find(r => r.ids.includes(pickA.id) && r.ids.includes(pickB.id)) : null;
+
+  const RivalryCard = ({ r }) => {
+    const [a, b] = r.ids.map(pById).filter(Boolean);
+    if (!a || !b) return null;
+    const wA = r.wins[a.id] || 0, wB = r.wins[b.id] || 0;
+    const leader = wA > wB ? a : wB > wA ? b : null;
+    return (
+      <Card pad={13} style={{ marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Avatar person={a} size={36} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{a.name}</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--display)' }}>{wA}</span>
+            </div>
+            <RivalryBar wins={r.wins} total={r.total} idA={a.id} idB={b.id} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{b.name}</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--muted)', fontFamily: 'var(--display)' }}>{wB}</span>
+            </div>
+          </div>
+          <Avatar person={b} size={36} />
+        </div>
+        {leader && <div style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--muted)', marginTop: 8 }}>👑 {leader.name} leads · {r.total} games</div>}
+        {!leader && <div style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--muted)', marginTop: 8 }}>Tied · {r.total} games</div>}
+      </Card>
+    );
+  };
+
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <SectionTitle style={{ marginBottom: 0 }}>Rivalries</SectionTitle>
+        <button type="button" onClick={() => { setPickA(null); setPickB(null); setSheetOpen(true); }} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--accent)', padding: 0 }}>Pick players</button>
+      </div>
+
+      {top.length === 0 ? (
+        <Card pad={20} style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>Not enough games yet</div>
+        </Card>
+      ) : (
+        top.map((r, i) => <RivalryCard key={i} r={r} />)
+      )}
+
+      <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Head-to-Head">
+        <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>Pick two players to compare</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+          {people.map(p => {
+            const selA = pickA?.id === p.id, selB = pickB?.id === p.id;
+            const sel = selA || selB;
+            return (
+              <button key={p.id} type="button" onClick={() => {
+                if (selA) { setPickA(null); return; }
+                if (selB) { setPickB(null); return; }
+                if (!pickA) setPickA(p); else if (!pickB) setPickB(p);
+              }} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                <div style={{ borderRadius: '50%', boxShadow: sel ? `0 0 0 3px var(--surface), 0 0 0 5px ${selA ? 'var(--accent)' : 'oklch(0.62 0.13 245)'}` : 'none' }}>
+                  <Avatar person={p} size={48} />
+                </div>
+                <span style={{ fontSize: 10.5, fontWeight: sel ? 700 : 500, color: sel ? 'var(--ink)' : 'var(--faint)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        {pickA && pickB && (
+          h2h ? <RivalryCard r={h2h} /> : (
+            <Card pad={20} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>No games between these two yet</div>
+            </Card>
+          )
+        )}
+      </Sheet>
+    </>
+  );
+}
+
 export function GamesScreen({ store }) {
   const { people, games } = store;
   const [cat, setCat] = useState('board');
@@ -717,6 +813,8 @@ export function GamesScreen({ store }) {
           )}
         </>
       )}
+
+      <RivalriesSection store={store} cat={cat} />
 
       {recent.length > 0 && (
         <>

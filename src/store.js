@@ -221,6 +221,30 @@ export function recentGames(games, cat) {
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 }
 
+export function rivalryStats(games, cat) {
+  const map = {};
+  (games || []).filter(g => g.cat === cat).forEach(g => {
+    let pairs = []; // [winnerId, loserId]
+    if (g.format === 'teams') {
+      const winners = g.winner === 'A' ? (g.teamA || []) : (g.teamB || []);
+      const losers  = g.winner === 'A' ? (g.teamB || []) : (g.teamA || []);
+      winners.forEach(w => losers.forEach(l => pairs.push([w, l])));
+    } else {
+      const others = (g.players || []).filter(id => id !== g.winnerId);
+      if (g.winnerId) others.forEach(l => pairs.push([g.winnerId, l]));
+    }
+    pairs.forEach(([w, l]) => {
+      const key = [w, l].sort().join('|');
+      if (!map[key]) map[key] = { ids: [w, l].sort(), wins: {} };
+      map[key].wins[w] = (map[key].wins[w] || 0) + 1;
+      map[key].wins[l] = map[key].wins[l] || 0;
+    });
+  });
+  return Object.values(map)
+    .map(r => ({ ...r, total: Object.values(r.wins).reduce((a, b) => a + b, 0) }))
+    .sort((a, b) => b.total - a.total);
+}
+
 export function awards(people, weeks, fetches, games) {
   const hs = hostStats(people, weeks);
   const fs = fetchStats(people, fetches);
