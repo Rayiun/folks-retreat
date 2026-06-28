@@ -128,7 +128,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         if (today.getHours() < 7) today.setDate(today.getDate() - 1);
         const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
         openEditor({ date: iso, attendees: weeks[0] ? weeks[0].attendees : people.map(p => p.id) });
-      }} style={{ width: '100%', marginBottom: 20 }}>Log this gathering</Btn>
+      }} style={{ width: '100%', marginBottom: 20 }}>Log this night</Btn>
 
       <SectionTitle>Host rotation · up next</SectionTitle>
       <Card className="hide-scrollbar" style={{ display: 'flex', gap: 6, marginBottom: 18, overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }} pad={14}>
@@ -240,13 +240,13 @@ export function HistoryScreen({ store, openEditor, openProfile }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <PageHead title="History" sub={`${350 + weeks.length} nights and counting`} />
       </div>
-      <Btn icon="plus" onClick={() => openEditor(null)} style={{ width: '100%', marginBottom: 16 }} size="lg">Log a gathering</Btn>
+      <Btn icon="plus" onClick={() => openEditor(null)} style={{ width: '100%', marginBottom: 16 }} size="lg">Log a night</Btn>
       <div style={{ marginBottom: 20 }}>
         <Segment value={view} onChange={setView} options={[{ value: 'list', label: 'List' }, { value: 'calendar', label: 'Calendar' }]} />
       </div>
       {weeks.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: 34 }}>
-          <div style={{ color: 'var(--muted)', fontSize: 15 }}>Nothing logged yet.<br />Tap "Log a gathering" to start.</div>
+          <div style={{ color: 'var(--muted)', fontSize: 15 }}>Nothing logged yet.<br />Tap "Log a night" to start.</div>
         </Card>
       ) : view === 'calendar' ? (
         <CalendarView store={store} openEditor={openEditor} />
@@ -499,7 +499,7 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
   const del = () => { if (editing && editing.id) store.deleteWeek(editing.id); onClose(); };
 
   return (
-    <Sheet open={open} onClose={onClose} title={isNew ? 'Log a gathering' : 'Edit gathering'}>
+    <Sheet open={open} onClose={onClose} title={isNew ? 'Log a night' : 'Edit night'}>
       <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Date</label>
       <DateField value={date} onChange={setDate} />
 
