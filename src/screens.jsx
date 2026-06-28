@@ -104,7 +104,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22, gap: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0, flexShrink: 0 }}>
           <div>
-            <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.4, lineHeight: 1 }}>{350 + weeks.length}</div>
+            <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.4, lineHeight: 1 }}>{351 + weeks.length}</div>
             <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--muted)', marginTop: 4 }}>Nights</div>
           </div>
           <div style={{ width: 1, height: 36, background: 'var(--line)', margin: '0 18px', flexShrink: 0 }} />
@@ -238,7 +238,7 @@ export function HistoryScreen({ store, openEditor, openProfile }) {
   return (
     <div style={{ padding: '4px 18px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <PageHead title="History" sub={`${350 + weeks.length} nights and counting`} />
+        <PageHead title="History" sub={`${351 + weeks.length} nights and counting...`} />
       </div>
       <Btn icon="plus" onClick={() => openEditor(null)} style={{ width: '100%', marginBottom: 16 }} size="lg">Log a night</Btn>
       <div style={{ marginBottom: 20 }}>
@@ -326,7 +326,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
       </div>
 
       <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px 0 18px' }} pad={16}>
-        <Stat value={350 + weeks.length} label="Nights" color="var(--accent)" />
+        <Stat value={351 + weeks.length} label="Nights" color="var(--accent)" />
       </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: '2px', margin: '0 -2px 18px' }}>
