@@ -304,7 +304,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
   return (
     <div style={{ padding: '4px 18px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <PageHead title="Leaderboard" sub="Who pulls their weight" />
+        <PageHead title="Hall of Fame" sub="Who pulls their weight" />
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <button onClick={openShare} style={{ border: 'none', background: 'var(--sunken)', width: 40, height: 40, borderRadius: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink)' }}>
