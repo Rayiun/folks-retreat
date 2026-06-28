@@ -783,15 +783,15 @@ export function GamesScreen({ store }) {
 
       {standings.length > 0 ? (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <SectionTitle style={{ marginBottom: 0 }}>Rankings</SectionTitle>
-            {rest.length > 0 && (
-              <button onClick={() => setShowAll(true)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: 0 }}>
-                See all
-              </button>
-            )}
-          </div>
           <Podium entries={standings} onPlayer={openPlayer} />
+          {rest.length > 0 && (
+            <button onClick={() => setShowAll(true)} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%',
+              border: 'none', background: 'var(--sunken)', cursor: 'pointer', borderRadius: 14,
+              padding: '11px 0', marginBottom: 20, fontFamily: 'inherit', fontSize: 13.5, fontWeight: 700, color: 'var(--accent)' }}>
+              <Icon name="list" size={15} sw={2.2} /> Full table · {standings.length} players
+            </button>
+          )}
           <Sheet open={showAll} onClose={() => setShowAll(false)} title="Full standings">
             <Card pad={8}>
               {standings.map((e, i) => (
