@@ -3,6 +3,20 @@ import { supabase } from './supabase.js';
 
 const HUES = [25, 55, 95, 135, 165, 200, 230, 260, 290, 320, 345, 10, 75];
 
+// Linked hosts: hosting counts for all members in the same group
+const LINKED_HOST_NAMES = [['A. Alzamil', 'F. Alzamil']];
+
+function linkedHostIds(people) {
+  return LINKED_HOST_NAMES.map(group =>
+    group.map(n => people.find(p => p.name === n)?.id).filter(Boolean)
+  ).filter(g => g.length > 1);
+}
+
+function expandHostId(id, groups) {
+  const g = groups.find(g => g.includes(id));
+  return g || [id];
+}
+
 export function surnameOf(name) {
   const parts = name.split(' ');
   return parts[parts.length - 1] || name;
@@ -147,8 +161,10 @@ export function attendanceInfo(person, weeks) {
   return { attended, total, rate: total ? Math.round((attended / total) * 100) : 0, streak };
 }
 export function rotationOrder(people, weeks) {
+  const groups = linkedHostIds(people);
   return people.map(p => {
-    const hosted = weeks.filter(w => w.hostId === p.id);
+    const ids = expandHostId(p.id, groups);
+    const hosted = weeks.filter(w => ids.includes(w.hostId));
     const last = hosted.length ? hosted.map(w => w.date).sort().reverse()[0] : null;
     return { person: p, hosted: hosted.length, lastHostedIso: last };
   }).sort((a, b) => {
@@ -220,8 +236,10 @@ export function awards(people, weeks, fetches, games) {
 }
 
 export function hostStats(people, weeks) {
+  const groups = linkedHostIds(people);
   return people.map(p => {
-    const hostedWeeks = weeks.filter(w => w.hostId === p.id);
+    const ids = expandHostId(p.id, groups);
+    const hostedWeeks = weeks.filter(w => ids.includes(w.hostId));
     const attended = weeks.filter(w => w.attendees.includes(p.id)).length;
     const lastHostedIso = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
     return { person: p, hosted: hostedWeeks.length, attended, lastHostedIso };
@@ -229,8 +247,10 @@ export function hostStats(people, weeks) {
 }
 
 export function overdueHost(people, weeks) {
+  const groups = linkedHostIds(people);
   const stats = people.map(p => {
-    const hostedWeeks = weeks.filter(w => w.hostId === p.id);
+    const ids = expandHostId(p.id, groups);
+    const hostedWeeks = weeks.filter(w => ids.includes(w.hostId));
     const lastHostedIso = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
     return { person: p, hosted: hostedWeeks.length, lastHostedIso };
   });
