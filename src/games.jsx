@@ -186,15 +186,14 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const [soloWinner, setSoloWinner] = useState(null);
   const [soloScore, setSoloScore] = useState({ w: 0, l: 0 });
   const [score, setScore] = useState({ A: 0, B: 0 });
-  const [winsA, setWinsA] = useState(1);
-  const [winsB, setWinsB] = useState(1);
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [teamsFromNight, setTeamsFromNight] = useState(false);
 
   const reset = () => {
     setTitle(''); setDate(TODAY_ISO);
     setAssign({}); setActiveTeam('A'); setTeamWinner(null); setSoloWinner(null); setSoloScore({ w: 0, l: 0 }); setScore({ A: 0, B: 0 });
-    setWinsA(1); setWinsB(1); setTeamsFromNight(false);
+    setTeamsFromNight(false);
   };
   useEffect(() => {
     if (!open) return;
@@ -245,10 +244,9 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const fifaScoreWinner = score.A === score.B ? null : (score.A > score.B ? 'A' : 'B');
 
   const soloFifaValid = soloWinner !== null && soloScore.w !== soloScore.l;
-  const multiWins = !isSolo && (winsA > 1 || winsB > 1) && (winsA + winsB) > 0;
   const canSave = isSolo
     ? (soloPlayers.length >= 1 && soloWinner !== null && (cat === 'fifa' ? soloFifaValid : true))
-    : (teamA.length >= 1 && teamB.length >= 1 && (multiWins || (cat === 'fifa' ? fifaScoreWinner : teamWinner)));
+    : (teamA.length >= 1 && teamB.length >= 1 && (cat === 'fifa' ? fifaScoreWinner : teamWinner));
 
   const save = () => {
     if (!canSave) return;
@@ -263,16 +261,8 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
     } else {
       gameData = { cat: 'board', format: 'teams', date, title: t, teamA, teamB, winner: teamWinner };
     }
-    if (editing) {
-      store.updateGame(editing.id, gameData);
-    } else if (!isSolo && (winsA > 1 || winsB > 1)) {
-      const saves = [];
-      for (let i = 0; i < winsA; i++) saves.push({ ...gameData, winner: 'A' });
-      for (let i = 0; i < winsB; i++) saves.push({ ...gameData, winner: 'B' });
-      saves.forEach(g => store.addGame(g));
-    } else {
-      store.addGame(gameData);
-    }
+    if (editing) store.updateGame(editing.id, gameData);
+    else store.addGame(gameData);
     onClose();
   };
 
@@ -423,24 +413,6 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
               })}
             </div>
           )}
-        </div>
-      )}
-
-      {!editing && !isSolo && teamA.length >= 1 && teamB.length >= 1 && (
-        <div style={{ marginTop: 16, marginBottom: 4 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>How many wins each?</div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            {[{ label: 'Team A', wins: winsA, set: setWinsA }, { label: 'Team B', wins: winsB, set: setWinsB }].map(({ label, wins, set }) => (
-              <div key={label} style={{ flex: 1, background: 'var(--sunken)', borderRadius: 14, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)' }}>{label}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <button type="button" onClick={() => set(w => Math.max(0, w - 1))} style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: 'var(--line)', cursor: 'pointer', fontSize: 18, color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', minWidth: 16, textAlign: 'center' }}>{wins}</span>
-                  <button type="button" onClick={() => set(w => w + 1)} style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: 'var(--line)', cursor: 'pointer', fontSize: 18, color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
