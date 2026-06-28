@@ -101,14 +101,14 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0, flexShrink: 0 }}>
           <div>
             <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.4, lineHeight: 1 }}>{350 + weeks.length}</div>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--muted)', marginTop: 4 }}>Nights</div>
+            <div style={{ fontSize: 11.5, fontWeight: 400, color: 'var(--muted)', marginTop: 4 }}>Nights</div>
           </div>
           <div style={{ width: 1, height: 36, background: 'var(--line)', margin: '0 18px', flexShrink: 0 }} />
           <div>
             <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.4, lineHeight: 1 }}>
               {lastWeek ? fmtDateShort(lastWeek.date) : '—'}
             </div>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--muted)', marginTop: 4 }}>Last night</div>
+            <div style={{ fontSize: 11.5, fontWeight: 400, color: 'var(--muted)', marginTop: 4 }}>Last night</div>
           </div>
         </div>
         <div style={{ width: 1, height: 36, background: 'var(--line)', margin: '0 18px', flexShrink: 0 }} />
