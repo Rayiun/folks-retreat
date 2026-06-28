@@ -130,7 +130,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         <Icon name="arrowRight" size={22} color="var(--accent-ink)" sw={2.2} />
       </Card>
 
-      <SectionTitle action={<Btn variant="quiet" size="sm" onClick={() => goTo('history')}>See all</Btn>}>Recent weeks</SectionTitle>
+      <SectionTitle action={<Btn variant="quiet" size="sm" onClick={() => goTo('history')}>See all</Btn>}>Recent gatherings</SectionTitle>
       {weeks.slice(0, 3).map(w => <WeekCard key={w.id} week={w} store={store} onEdit={openEditor} onAvatar={openProfile} />)}
       {weeks.length === 0 && <Card style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>No weeks logged yet.</Card>}
     </div>
