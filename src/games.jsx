@@ -782,7 +782,27 @@ export function GamesScreen({ store }) {
       </div>
 
       {standings.length > 0 ? (
-        <Podium entries={standings} onPlayer={openPlayer} />
+        <>
+          <Podium entries={standings} onPlayer={openPlayer} />
+          {rest.length > 0 && (
+            <>
+              <button onClick={() => setShowAll(true)} style={{ display: 'block', margin: '-8px auto 20px', border: 'none', background: 'none',
+                cursor: 'pointer', color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 700 }}>
+                Full table ({standings.length} players)
+              </button>
+              <Sheet open={showAll} onClose={() => setShowAll(false)} title="Full standings">
+                <Card pad={8}>
+                  {standings.map((e, i) => (
+                    <div key={e.person.id}>
+                      {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
+                      <StandingRow rank={i + 1} entry={e} onClick={() => { setShowAll(false); openPlayer(e.person); }} />
+                    </div>
+                  ))}
+                </Card>
+              </Sheet>
+            </>
+          )}
+        </>
       ) : (
         <Card style={{ textAlign: 'center', marginBottom: 18 }} pad={26}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>No {cat === 'board' ? 'Board Games' : 'FIFA'} yet</div>
@@ -793,26 +813,6 @@ export function GamesScreen({ store }) {
       <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
         Log a {cat === 'fifa' ? 'FIFA' : 'board'} match
       </Btn>
-
-      {rest.length > 0 && (
-        <>
-          <SectionTitle>Rest of the table</SectionTitle>
-          <Card style={{ marginBottom: rest.length > 5 ? 12 : 24 }} pad={8}>
-            {visibleRest.map((e, i) => (
-              <div key={e.person.id}>
-                {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
-                <StandingRow rank={i + 4} entry={e} onClick={() => openPlayer(e.person)} />
-              </div>
-            ))}
-          </Card>
-          {rest.length > 5 && (
-            <button onClick={() => setShowAll(s => !s)} style={{ display: 'block', margin: '0 auto 24px', border: 'none', background: 'none',
-              cursor: 'pointer', color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 700 }}>
-              {showAll ? 'Show less' : `Show all ${standings.length}`}
-            </button>
-          )}
-        </>
-      )}
 
       <RivalriesSection store={store} cat={cat} />
 
