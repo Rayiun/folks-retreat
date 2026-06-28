@@ -200,7 +200,7 @@ export function WheelScreen({ store }) {
     <div style={{ padding: '4px 18px 16px' }}>
       <div style={{ marginBottom: 14 }}>
         <h1 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: 30, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.6 }}>The Walk of Shame</h1>
-        <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: 14.5 }}>Spin to find this week's sucker!</p>
+        <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: 14.5 }}>Spin to find tonight's sucker!</p>
       </div>
 
       <div style={{ position: 'relative', width: '100%', maxWidth: 340, margin: '6px auto 8px', aspectRatio: '1' }}>
