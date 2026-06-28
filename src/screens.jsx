@@ -150,7 +150,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ color: 'var(--accent-ink)', fontWeight: 700, fontSize: 17, fontFamily: 'var(--display)', letterSpacing: -0.2 }}>The Walk of Shame</div>
           <div style={{ color: 'var(--accent-ink)', opacity: 0.85, fontSize: 13, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {lf ? `Last fetch: ${lf.person ? lf.person.name : '—'} · ${fmtDateShort(lf.date)}` : 'Pick who fetches the delivery'}
+            {lf ? `Last fetch: ${lf.person ? lf.person.name : '—'} · ${fmtDateShort(lf.date)}` : 'Spin to ruin someone's evening'}
           </div>
         </div>
         <Icon name="arrowRight" size={22} color="var(--accent-ink)" sw={2.2} />
