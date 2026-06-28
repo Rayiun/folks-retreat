@@ -174,7 +174,7 @@ function saveTitle(t) {
   if (!existing.includes(t)) localStorage.setItem(TITLES_KEY, JSON.stringify([t, ...existing].slice(0, 20)));
 }
 
-function MatchEditor({ store, open, onClose, initialCat }) {
+function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const { people } = store;
   const [cat, setCat] = useState(initialCat || 'board');
   const [date, setDate] = useState(TODAY_ISO);
@@ -191,7 +191,26 @@ function MatchEditor({ store, open, onClose, initialCat }) {
     setTitle(''); setDate(TODAY_ISO);
     setAssign({}); setActiveTeam('A'); setTeamWinner(null); setSoloWinner(null); setSoloScore({ w: 0, l: 0 }); setScore({ A: 0, B: 0 });
   };
-  useEffect(() => { if (open) { setCat(initialCat || 'board'); reset(); setSavedTitles(loadSavedTitles()); } }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    setSavedTitles(loadSavedTitles());
+    if (editing) {
+      setCat(editing.cat);
+      setDate(editing.date);
+      setTitle(editing.cat === 'fifa' ? '' : editing.title);
+      if (editing.format === 'teams') {
+        const a = {}; (editing.teamA || []).forEach(id => a[id] = 'A'); (editing.teamB || []).forEach(id => a[id] = 'B');
+        setAssign(a); setActiveTeam('A'); setTeamWinner(editing.winner);
+        if (editing.cat === 'fifa' && editing.score) setScore({ A: editing.score[0], B: editing.score[1] });
+      } else {
+        const a = {}; (editing.players || []).forEach(id => a[id] = 'A');
+        setAssign(a); setActiveTeam('A'); setSoloWinner(editing.winnerId);
+        if (editing.score) setSoloScore({ w: editing.score[0], l: editing.score[1] });
+      }
+    } else {
+      setCat(initialCat || 'board'); reset();
+    }
+  }, [open]);
 
   const pById = (id) => people.find(p => p.id === id);
   const teamA = Object.keys(assign).filter(id => assign[id] === 'A');
@@ -222,16 +241,17 @@ function MatchEditor({ store, open, onClose, initialCat }) {
     if (!canSave) return;
     const t = cat === 'fifa' ? 'FIFA' : (title.trim() || 'Game night');
     if (cat !== 'fifa' && title.trim()) saveTitle(title.trim());
+    let gameData;
     if (isSolo) {
       const extras = cat === 'fifa' ? { score: [soloScore.w, soloScore.l] } : {};
-      store.addGame({ cat, format: 'ffa', date, title: t, players: soloPlayers, winnerId: soloWinner, ...extras });
-      onClose(); return;
-    }
-    if (cat === 'fifa') {
-      store.addGame({ cat: 'fifa', format: 'teams', date, title: t, teamA, teamB, winner: fifaScoreWinner, score: [score.A, score.B] });
+      gameData = { cat, format: 'ffa', date, title: t, players: soloPlayers, winnerId: soloWinner, ...extras };
+    } else if (cat === 'fifa') {
+      gameData = { cat: 'fifa', format: 'teams', date, title: t, teamA, teamB, winner: fifaScoreWinner, score: [score.A, score.B] };
     } else {
-      store.addGame({ cat: 'board', format: 'teams', date, title: t, teamA, teamB, winner: teamWinner });
+      gameData = { cat: 'board', format: 'teams', date, title: t, teamA, teamB, winner: teamWinner };
     }
+    if (editing) store.updateGame(editing.id, gameData);
+    else store.addGame(gameData);
     onClose();
   };
 
@@ -239,7 +259,7 @@ function MatchEditor({ store, open, onClose, initialCat }) {
   const suggestions = savedTitles.filter(t => t.toLowerCase().includes(title.toLowerCase()) && t !== title);
 
   return (
-    <Sheet open={open} onClose={onClose} title={`Log a ${cat === 'fifa' ? 'FIFA' : 'board'} match`}>
+    <Sheet open={open} onClose={onClose} title={editing ? 'Edit match' : `Log a ${cat === 'fifa' ? 'FIFA' : 'board'} match`}>
       {/* category switch */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6, marginBottom: 14 }}>
         <button type="button" onClick={switchCat} style={{ border: 'none', background: 'none', cursor: 'pointer',
@@ -457,7 +477,7 @@ function LocalAvatarStack({ ids, personById, size = 22, onPlayer }) {
   );
 }
 
-function MatchRow({ store, game, onPlayer, onDelete }) {
+function MatchRow({ store, game, onPlayer, onDelete, onEdit }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const pById = store.personById;
   const isTeams = game.format === 'teams';
@@ -504,7 +524,7 @@ function MatchRow({ store, game, onPlayer, onDelete }) {
 
   return (
     <>
-      <Card style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }} pad={13}>
+      <Card onClick={() => onEdit(game)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, cursor: 'pointer' }} pad={13}>
         {body}
         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
           <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{fmtDateShort(game.date)}</span>
@@ -591,11 +611,13 @@ export function GamesScreen({ store }) {
   const { people, games } = store;
   const [cat, setCat] = useState('board');
   const [editorOpen, setEditorOpen] = useState(false);
+  const [editingGame, setEditingGame] = useState(null);
   const [player, setPlayer] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
   const openPlayer = (p) => { if (p) { setPlayer(p); setPlayerOpen(true); } };
+  const openEdit = (g) => { setEditingGame(g); setEditorOpen(true); };
   const standings = gameStats(people, games, cat);
   const recent = recentGames(games, cat);
   const rest = standings.slice(3);
@@ -645,12 +667,12 @@ export function GamesScreen({ store }) {
         <>
           <SectionTitle>Recent results</SectionTitle>
           {recent.map(g => (
-            <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onDelete={store.deleteGame} />
+            <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onDelete={store.deleteGame} onEdit={openEdit} />
           ))}
         </>
       )}
 
-      <MatchEditor store={store} open={editorOpen} onClose={() => setEditorOpen(false)} initialCat={cat} />
+      <MatchEditor store={store} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingGame(null); }} initialCat={cat} editing={editingGame} />
       <GamePlayerSheet store={store} person={player} open={playerOpen} onClose={() => setPlayerOpen(false)} />
     </div>
   );

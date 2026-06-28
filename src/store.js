@@ -126,6 +126,14 @@ export function useStore() {
       winner: game.winner || null, score: game.score || null,
     });
   }, []);
+  const updateGame = useCallback(async (id, game) => {
+    await supabase.from('games').update({
+      cat: game.cat, title: game.title || '', date: game.date,
+      format: game.format, players: game.players || [], winner_id: game.winnerId || null,
+      team_a: game.teamA || [], team_b: game.teamB || [],
+      winner: game.winner || null, score: game.score || null,
+    }).eq('id', id);
+  }, []);
   const deleteGame = useCallback(async (id) => {
     await supabase.from('games').delete().eq('id', id);
   }, []);
@@ -139,7 +147,7 @@ export function useStore() {
     ]);
   }, []);
 
-  return { ...state, personById, addWeek, updateWeek, deleteWeek, addPerson, removePerson, addFetch, deleteFetch, addGame, deleteGame, resetAll };
+  return { ...state, personById, addWeek, updateWeek, deleteWeek, addPerson, removePerson, addFetch, deleteFetch, addGame, updateGame, deleteGame, resetAll };
 }
 
 export function fetchStats(people, fetches) {
