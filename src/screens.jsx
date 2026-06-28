@@ -539,7 +539,7 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
         {!isNew && <Btn variant="danger" icon="trash" onClick={() => setConfirmDelete(true)}>Delete</Btn>}
         <div style={{ flex: 1 }} />
         <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
-        <Btn icon="check" onClick={save} disabled={!hostId}>Save</Btn>
+        <Btn icon="check" onClick={save}>Save</Btn>
       </div>
       <ConfirmDelete open={confirmDelete} onClose={() => setConfirmDelete(false)} onConfirm={del} />
     </Sheet>
