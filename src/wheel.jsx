@@ -199,7 +199,7 @@ export function WheelScreen({ store }) {
   return (
     <div style={{ padding: '4px 18px 16px' }}>
       <div style={{ marginBottom: 14 }}>
-        <h1 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: 30, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.6 }}>Luck Wheel</h1>
+        <h1 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: 30, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.6 }}>The Walk of Shame</h1>
         <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: 14.5 }}>Spin to find this week's sucker!</p>
       </div>
 
