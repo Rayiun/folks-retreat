@@ -189,11 +189,12 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const [winsA, setWinsA] = useState(1);
   const [winsB, setWinsB] = useState(1);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [teamsFromNight, setTeamsFromNight] = useState(false);
 
   const reset = () => {
     setTitle(''); setDate(TODAY_ISO);
     setAssign({}); setActiveTeam('A'); setTeamWinner(null); setSoloWinner(null); setSoloScore({ w: 0, l: 0 }); setScore({ A: 0, B: 0 });
-    setWinsA(1); setWinsB(1);
+    setWinsA(1); setWinsB(1); setTeamsFromNight(false);
   };
   useEffect(() => {
     if (!open) return;
@@ -213,6 +214,13 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
       }
     } else {
       setCat(initialCat || 'board'); reset();
+      // pre-fill teams from most recent game tonight
+      const tonight = store.games.filter(g => g.date === TODAY_ISO && g.format === 'teams');
+      if (tonight.length > 0) {
+        const last = tonight[0];
+        const a = {}; (last.teamA || []).forEach(id => a[id] = 'A'); (last.teamB || []).forEach(id => a[id] = 'B');
+        setAssign(a); setActiveTeam('A'); setTeamsFromNight(true);
+      }
     }
   }, [open]);
 
@@ -308,10 +316,16 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
       )}
 
       {/* team tags — A active by default */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: teamsFromNight ? 8 : 14, alignItems: 'center' }}>
         <TeamTag t="A" count={teamA.length} active={activeTeam === 'A'} onClick={() => setActiveTeam('A')} />
         <TeamTag t="B" count={teamB.length} active={activeTeam === 'B'} onClick={() => setActiveTeam('B')} />
       </div>
+      {teamsFromNight && !editing && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '7px 11px', borderRadius: 12, background: 'var(--accent-soft)' }}>
+          <span style={{ fontSize: 12.5, color: 'var(--accent)', fontWeight: 600 }}>Same teams as tonight</span>
+          <button type="button" onClick={() => { setAssign({}); setTeamsFromNight(false); }} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--accent)', padding: '2px 6px' }}>Clear</button>
+        </div>
+      )}
 
       {/* player grid */}
       <TeamPicker people={people} assign={assign} activeTeam={activeTeam} onAssign={assignToTeam} />
