@@ -127,7 +127,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
       }} style={{ width: '100%', marginBottom: 20 }}>Log this gathering</Btn>
 
       <SectionTitle>Host rotation · up next</SectionTitle>
-      <Card style={{ display: 'flex', gap: 6, marginBottom: 18, overflowX: 'auto' }} pad={14}>
+      <Card style={{ display: 'flex', gap: 6, marginBottom: 18, overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', scrollSnapType: 'x proximity', touchAction: 'pan-x' }} pad={14}>
         {rotation.map((r, i) => (
           <button key={r.person.id} onClick={() => openProfile(r.person)} style={{ border: 'none', background: 'none', cursor: 'pointer',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0, width: 56, padding: 0 }}>
