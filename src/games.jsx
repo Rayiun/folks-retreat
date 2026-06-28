@@ -686,13 +686,8 @@ export function GamesScreen({ store }) {
       {recent.length > 0 && (
         <>
           <SectionTitle>Recent results</SectionTitle>
-          {Object.entries(
-            recent.reduce((acc, g) => { (acc[g.date] = acc[g.date] || []).push(g); return acc; }, {})
-          ).map(([date, gs]) => (
-            <div key={date} style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 8 }}>{fmtDate(date)}</div>
-              {gs.map(g => <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onEdit={openEdit} />)}
-            </div>
+          {recent.map(g => (
+            <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onEdit={openEdit} />
           ))}
         </>
       )}
