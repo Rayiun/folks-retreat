@@ -48,13 +48,7 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
           <Avatar person={host} size={46} />
         </div>
       ) : (
-        <div style={{ display: 'flex', width: 46, height: 46, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {(week.attendees || []).slice(0, 3).map((id, i) => (
-            <span key={id} style={{ marginLeft: i === 0 ? 0 : -10, zIndex: i }}>
-              <Avatar person={store.personById(id)} size={26} />
-            </span>
-          ))}
-        </div>
+        <img src="/app-icon.png" alt="" style={{ width: 46, height: 46, borderRadius: 12, flexShrink: 0, objectFit: 'cover' }} />
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 16, letterSpacing: -0.2 }}>
