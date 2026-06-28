@@ -43,7 +43,7 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
         <AvatarStack ids={week.attendees} personById={store.personById} max={4} size={26} />
-        <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{week.attendees.length} here</span>
+        <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{week.attendees.length} attended</span>
       </div>
     </Card>
   );
