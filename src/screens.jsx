@@ -191,9 +191,13 @@ function MonthGrid({ y, m, byDate, store, openEditor }) {
           return (
             <div key={i} onClick={week ? () => openEditor(week) : undefined} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: week ? 'pointer' : 'default' }}>
               {week ? (
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: host ? host.color : 'var(--sunken)', color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--display)', fontWeight: 700, fontSize: 12,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.18)' }}>{host ? initials(host.name) : d}</div>
+                host ? (
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: host.color, color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--display)', fontWeight: 700, fontSize: 12,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.18)' }}>{initials(host.name)}</div>
+                ) : (
+                  <img src="/collective-failure.jpg" alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 2px 6px rgba(0,0,0,0.18)' }} />
+                )
               ) : (
                 <span style={{ fontSize: 13, color: 'var(--faint)' }}>{d}</span>
               )}
