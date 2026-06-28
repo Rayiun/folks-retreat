@@ -16,7 +16,7 @@ export const THEMES = {
     accentSoft: 'oklch(0.93 0.045 50)',
     good: 'oklch(0.58 0.075 150)',
     goodSoft: 'oklch(0.93 0.04 150)',
-    display: "'Bricolage Grotesque'",
+    display: "ThmanyahSerif",
   },
   dark: {
     label: 'Dark', dark: true,
@@ -32,7 +32,7 @@ export const THEMES = {
     accentSoft: 'oklch(0.315 0.075 48)',
     good: 'oklch(0.76 0.105 152)',
     goodSoft: 'oklch(0.30 0.055 152)',
-    display: "'Bricolage Grotesque'",
+    display: "ThmanyahSerif",
   },
 };
 

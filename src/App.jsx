@@ -27,7 +27,7 @@ function AppGate({ onUnlock, themeVars: vars }) {
   const KEYS = [1,2,3,4,5,6,7,8,9,null,0,'⌫'];
 
   return (
-    <div style={{ ...vars, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', padding: '0 32px' }}>
+    <div style={{ ...vars, fontFamily: "ThmanyahSans, system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', padding: '0 32px' }}>
       <div style={{ fontFamily: 'var(--display)', fontSize: 28, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.5, marginBottom: 6 }}>Folk's Retreat</div>
       <div style={{ fontSize: 13.5, color: 'var(--muted)', fontWeight: 500, marginBottom: 40 }}>Enter passcode to continue</div>
 
@@ -128,7 +128,7 @@ export default function App() {
   if (!authed) return <AppGate themeVars={vars} onUnlock={() => { localStorage.setItem(GATE_KEY, '1'); setAuthed(true); }} />;
 
   if (store.loading) return (
-    <div style={{ ...vars, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", gap: 12 }}>
+    <div style={{ ...vars, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: "ThmanyahSans, system-ui, sans-serif", gap: 12 }}>
       <div style={{ fontFamily: 'var(--display)', fontSize: 26, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.5 }}>Folk's Retreat</div>
       <div style={{ fontSize: 13, color: 'var(--faint)', fontWeight: 500 }}>Loading…</div>
     </div>
@@ -160,7 +160,7 @@ export default function App() {
   else screen = <StatsScreen store={store} openPeople={() => setPeopleOpen(true)} openProfile={openProfile} openShare={() => setShareOpen(true)} />;
 
   return (
-    <div style={{ ...vars, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'fixed', inset: 0, overflow: 'hidden' }}>
+    <div style={{ ...vars, fontFamily: "ThmanyahSans, system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'fixed', inset: 0, overflow: 'hidden' }}>
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)', WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
         {screen}
       </div>

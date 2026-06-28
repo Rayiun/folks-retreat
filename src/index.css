@@ -3,7 +3,7 @@
 body {
   margin: 0;
   background: oklch(0.91 0.012 70);
-  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  font-family: ThmanyahSans, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
