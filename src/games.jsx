@@ -125,7 +125,6 @@ function SameCrewChip({ onClick, label, style: s = {} }) {
 
 function QuickDate({ value, onChange }) {
   const [showCal, setShowCal] = useState(false);
-  const calRef = useRef(null);
   const customActive = value !== TODAY_ISO;
   const pill = (label, active, onClick) => (
     <button type="button" onClick={onClick} style={{
@@ -133,17 +132,13 @@ function QuickDate({ value, onChange }) {
       fontSize: 14, fontWeight: 700, transition: 'all .15s', whiteSpace: 'nowrap',
       background: active ? 'var(--accent)' : 'var(--sunken)', color: active ? 'var(--accent-ink)' : 'var(--muted)' }}>{label}</button>
   );
-  const openCal = () => {
-    setShowCal(true);
-    setTimeout(() => calRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
-  };
   return (
-    <div style={{ marginBottom: showCal ? 0 : 22 }}>
+    <div style={{ marginBottom: showCal ? 0 : 0 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         {pill('Today', !customActive, () => { onChange(TODAY_ISO); setShowCal(false); })}
-        {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, openCal)}
+        {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, () => setShowCal(true))}
       </div>
-      {showCal && <div ref={calRef} style={{ marginTop: 10 }}><DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen /></div>}
+      {showCal && <div style={{ marginTop: 10 }}><DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen /></div>}
     </div>
   );
 }
@@ -284,6 +279,11 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
         </button>
       </div>
 
+      {/* date picker — top so calendar is always visible */}
+      <div style={{ marginBottom: 16 }}>
+        <QuickDate value={date} onChange={setDate} />
+      </div>
+
       {/* game name input — board only */}
       {cat === 'board' && (
         <div style={{ marginBottom: 18, position: 'relative' }}>
@@ -420,10 +420,6 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
           )}
         </div>
       )}
-
-      <div style={{ marginTop: 20 }}>
-        <QuickDate value={date} onChange={setDate} />
-      </div>
 
       <Btn variant="primary" size="lg" icon="check" disabled={!canSave} onClick={save} style={{ width: '100%', marginTop: 4 }}>
         Save result
