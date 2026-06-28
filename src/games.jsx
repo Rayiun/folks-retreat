@@ -188,6 +188,7 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const [score, setScore] = useState({ A: 0, B: 0 });
   const [winsA, setWinsA] = useState(1);
   const [winsB, setWinsB] = useState(1);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const reset = () => {
     setTitle(''); setDate(TODAY_ISO);
@@ -436,6 +437,14 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
       <Btn variant="primary" size="lg" icon="check" disabled={!canSave} onClick={save} style={{ width: '100%', marginTop: 4 }}>
         Save result
       </Btn>
+      {editing && (
+        <>
+          <ConfirmDelete open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={() => { store.deleteGame(editing.id); onClose(); }} />
+          <Btn variant="quiet" size="sm" icon="trash" onClick={() => setConfirmOpen(true)} style={{ width: '100%', marginTop: 10, color: 'oklch(0.58 0.18 25)' }}>
+            Delete this match
+          </Btn>
+        </>
+      )}
     </Sheet>
   );
 }
@@ -507,8 +516,7 @@ function LocalAvatarStack({ ids, personById, size = 22, onPlayer }) {
   );
 }
 
-function MatchRow({ store, game, onPlayer, onDelete, onEdit }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
+function MatchRow({ store, game, onPlayer, onEdit }) {
   const pById = store.personById;
   const isTeams = game.format === 'teams';
 
@@ -556,14 +564,10 @@ function MatchRow({ store, game, onPlayer, onDelete, onEdit }) {
     <>
       <Card onClick={() => onEdit(game)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, cursor: 'pointer' }} pad={13}>
         {body}
-        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+        <div style={{ textAlign: 'right' }}>
           <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{fmtDateShort(game.date)}</span>
-          <button onClick={() => setConfirmOpen(true)} aria-label="Delete match" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, color: 'var(--faint)', display: 'flex' }}>
-            <Icon name="trash" size={15} sw={1.9} />
-          </button>
         </div>
       </Card>
-      <ConfirmDelete open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={() => onDelete(game.id)} />
     </>
   );
 }
@@ -697,7 +701,7 @@ export function GamesScreen({ store }) {
         <>
           <SectionTitle>Recent results</SectionTitle>
           {recent.map(g => (
-            <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onDelete={store.deleteGame} onEdit={openEdit} />
+            <MatchRow key={g.id} store={store} game={g} onPlayer={openPlayer} onEdit={openEdit} />
           ))}
         </>
       )}
