@@ -230,7 +230,7 @@ export function HistoryScreen({ store, openEditor, openProfile }) {
   return (
     <div style={{ padding: '4px 18px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <PageHead title="History" sub={`${weeks.length} gatherings logged`} />
+        <PageHead title="History" sub={`${350 + weeks.length} gatherings and counting`} />
       </div>
       <Btn icon="plus" onClick={() => openEditor(null)} style={{ width: '100%', marginBottom: 16 }} size="lg">Log a gathering</Btn>
       <div style={{ marginBottom: 20 }}>
