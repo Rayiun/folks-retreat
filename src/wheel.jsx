@@ -318,7 +318,7 @@ export function WheelScreen({ store }) {
             </div>
             <h2 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: 32, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.6 }}>{winner.name}</h2>
             <p style={{ margin: '10px auto 22px', color: 'var(--muted)', fontSize: 16, maxWidth: 260 }}>
-              is this week's sucker 🖕🏼
+              Is this week's sucker 🖕🏼
             </p>
             <Btn icon={saved ? 'check' : 'plus'} disabled={saved}
               onClick={() => { store.addFetch(winner.id); setSaved(true); }}
