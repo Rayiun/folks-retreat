@@ -95,6 +95,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
 
       <Btn icon="plus" onClick={() => {
         const today = new Date();
+        if (today.getHours() < 7) today.setDate(today.getDate() - 1);
         const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
         openEditor({ date: iso, attendees: weeks[0] ? weeks[0].attendees : people.map(p => p.id) });
       }} style={{ width: '100%', marginBottom: 20 }}>Log this gathering</Btn>

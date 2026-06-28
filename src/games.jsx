@@ -8,8 +8,7 @@ const TEAM_B_COLOR = 'oklch(0.62 0.13 245)';
 const teamColor = (t) => (t === 'A' ? 'var(--accent)' : TEAM_B_COLOR);
 const strip = (name) => surnameOf(name);
 const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const TODAY_ISO = isoOf(new Date());
-const YDAY_ISO = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return isoOf(d); })();
+const TODAY_ISO = (() => { const d = new Date(); if (d.getHours() < 7) d.setDate(d.getDate() - 1); return isoOf(d); })();
 const byDateDesc = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
 
 function TeamMark({ person, size = 44, ring, badge, crown, dim, onClick }) {
