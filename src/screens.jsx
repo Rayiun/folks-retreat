@@ -283,7 +283,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
       </div>
 
       <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px 0 18px' }} pad={16}>
-        <Stat value={weeks.length} label="Gatherings" color="var(--accent)" />
+        <Stat value={350 + weeks.length} label="Gatherings" color="var(--accent)" />
       </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: '2px', margin: '0 -2px 18px' }}>
