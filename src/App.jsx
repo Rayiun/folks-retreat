@@ -82,9 +82,7 @@ function TabBar({ active, onChange }) {
   return (
     <div style={{
       display: 'flex',
-      background: 'color-mix(in oklch, var(--surface) 88%, transparent)',
-      backdropFilter: 'blur(18px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+      background: 'var(--surface)',
       borderTop: '1px solid var(--line)',
       padding: '8px 8px env(safe-area-inset-bottom, 16px)',
       flexShrink: 0,
