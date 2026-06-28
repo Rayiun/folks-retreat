@@ -20,9 +20,9 @@ export const THEMES = {
   },
   dark: {
     label: 'Dark', dark: true,
-    bg: 'oklch(0.175 0.009 56)',
-    surface: 'oklch(0.245 0.013 58)',
-    sunken: 'oklch(0.205 0.010 57)',
+    bg: 'oklch(0.225 0.011 57)',
+    surface: 'oklch(0.275 0.013 58)',
+    sunken: 'oklch(0.245 0.012 57)',
     ink: 'oklch(0.967 0.010 74)',
     muted: 'oklch(0.76 0.016 64)',
     faint: 'oklch(0.58 0.016 60)',
