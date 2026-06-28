@@ -160,7 +160,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         <Icon name="arrowRight" size={22} color="var(--accent-ink)" sw={2.2} />
       </Card>
 
-      <SectionTitle action={<Btn variant="quiet" size="sm" onClick={() => goTo('history')}>See all</Btn>}>Recent gatherings</SectionTitle>
+      <SectionTitle action={<Btn variant="quiet" size="sm" onClick={() => goTo('history')}>See all</Btn>}>Recent nights</SectionTitle>
       {weeks.slice(0, 3).map(w => <WeekCard key={w.id} week={w} store={store} onEdit={openEditor} onAvatar={openProfile} />)}
       {weeks.length === 0 && <Card style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>No weeks logged yet.</Card>}
     </div>
@@ -238,7 +238,7 @@ export function HistoryScreen({ store, openEditor, openProfile }) {
   return (
     <div style={{ padding: '4px 18px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <PageHead title="History" sub={`${350 + weeks.length} gatherings and counting`} />
+        <PageHead title="History" sub={`${350 + weeks.length} nights and counting`} />
       </div>
       <Btn icon="plus" onClick={() => openEditor(null)} style={{ width: '100%', marginBottom: 16 }} size="lg">Log a gathering</Btn>
       <div style={{ marginBottom: 20 }}>
@@ -326,7 +326,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
       </div>
 
       <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px 0 18px' }} pad={16}>
-        <Stat value={350 + weeks.length} label="Gatherings" color="var(--accent)" />
+        <Stat value={350 + weeks.length} label="Nights" color="var(--accent)" />
       </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: '2px', margin: '0 -2px 18px' }}>
@@ -607,7 +607,7 @@ export function ProfileSheet({ store, person, open, onClose, openEditor }) {
         <MiniStat value={ai.streak} label="Streak" />
         <MiniStat value={fetched} label="Fetched" color="oklch(0.66 0.13 295)" />
       </div>
-      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Recent gatherings</div>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Recent nights</div>
       {theirWeeks.map(w => (
         <div key={w.id} onClick={() => { onClose(); setTimeout(() => openEditor(w), 280); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', cursor: 'pointer',
           borderBottom: '1px solid var(--line)' }}>
@@ -616,7 +616,7 @@ export function ProfileSheet({ store, person, open, onClose, openEditor }) {
           <div style={{ color: 'var(--faint)', fontSize: 12 }}>{w.hostId === person.id ? 'hosted' : 'attended'}</div>
         </div>
       ))}
-      {theirWeeks.length === 0 && <div style={{ color: 'var(--muted)', fontSize: 14, padding: '8px 2px' }}>No gatherings yet.</div>}
+      {theirWeeks.length === 0 && <div style={{ color: 'var(--muted)', fontSize: 14, padding: '8px 2px' }}>No nights yet.</div>}
     </Sheet>
   );
 }
@@ -648,7 +648,7 @@ export function ShareSheet({ store, open, onClose }) {
 
   const lines = [
     '☕ Folk\'s Retreat — the story so far',
-    `• ${weeks.length} gatherings, ${people.length} folks`,
+    `• ${weeks.length} nights, ${people.length} folks`,
     hs[0] && hs[0].hosted ? `• Top host: ${hs[0].person.name} (${hs[0].hosted}×)` : null,
     loyal ? `• Most loyal: ${loyal.person.name} (${loyal.rate}% turnout)` : null,
     fs[0] && fs[0].fetched ? `• Top fetcher: ${fs[0].person.name} (${fs[0].fetched} runs)` : null,
