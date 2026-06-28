@@ -783,25 +783,25 @@ export function GamesScreen({ store }) {
 
       {standings.length > 0 ? (
         <>
-          <Podium entries={standings} onPlayer={openPlayer} />
-          {rest.length > 0 && (
-            <>
-              <button onClick={() => setShowAll(true)} style={{ display: 'block', margin: '-8px auto 20px', border: 'none', background: 'none',
-                cursor: 'pointer', color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 700 }}>
-                Full table ({standings.length} players)
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <SectionTitle style={{ marginBottom: 0 }}>Rankings</SectionTitle>
+            {rest.length > 0 && (
+              <button onClick={() => setShowAll(true)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: 0 }}>
+                See all
               </button>
-              <Sheet open={showAll} onClose={() => setShowAll(false)} title="Full standings">
-                <Card pad={8}>
-                  {standings.map((e, i) => (
-                    <div key={e.person.id}>
-                      {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
-                      <StandingRow rank={i + 1} entry={e} onClick={() => { setShowAll(false); openPlayer(e.person); }} />
-                    </div>
-                  ))}
-                </Card>
-              </Sheet>
-            </>
-          )}
+            )}
+          </div>
+          <Podium entries={standings} onPlayer={openPlayer} />
+          <Sheet open={showAll} onClose={() => setShowAll(false)} title="Full standings">
+            <Card pad={8}>
+              {standings.map((e, i) => (
+                <div key={e.person.id}>
+                  {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
+                  <StandingRow rank={i + 1} entry={e} onClick={() => { setShowAll(false); openPlayer(e.person); }} />
+                </div>
+              ))}
+            </Card>
+          </Sheet>
         </>
       ) : (
         <Card style={{ textAlign: 'center', marginBottom: 18 }} pad={26}>
