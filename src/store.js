@@ -32,6 +32,7 @@ const mapGame   = r => ({ id: r.id, cat: r.cat, title: r.title || '', date: r.da
 
 function todayIso() {
   const d = new Date();
+  if (d.getHours() < 7) d.setDate(d.getDate() - 1);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
