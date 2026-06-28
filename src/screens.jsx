@@ -23,8 +23,22 @@ export function PageHead({ title, sub }) {
   );
 }
 
+function nightMVP(date, games, personById) {
+  const wins = {};
+  (games || []).filter(g => g.date === date).forEach(g => {
+    const winners = g.format === 'teams'
+      ? (g.winner === 'A' ? g.teamA : g.teamB) || []
+      : g.winnerId ? [g.winnerId] : [];
+    winners.forEach(id => { wins[id] = (wins[id] || 0) + 1; });
+  });
+  const top = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
+  if (!top || top[1] < 1) return null;
+  return { person: personById(top[0]), wins: top[1] };
+}
+
 function WeekCard({ week, store, onEdit, onAvatar }) {
   const host = store.personById(week.hostId);
+  const mvp = nightMVP(week.date, store.games, store.personById);
   return (
     <Card onClick={() => onEdit(week)} style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }} pad={14}>
       <div onClick={onAvatar ? (e) => { e.stopPropagation(); onAvatar(host); } : undefined} style={{ cursor: onAvatar ? 'pointer' : 'default' }}>
@@ -40,6 +54,12 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
         {week.note ? (
           <div style={{ marginTop: 5, color: 'var(--faint)', fontSize: 12.5, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>"{week.note}"</div>
         ) : null}
+        {mvp && (
+          <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--accent-soft)', borderRadius: 99, padding: '3px 9px 3px 5px' }}>
+            <Avatar person={mvp.person} size={18} />
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent)' }}>MVP · {mvp.wins} {mvp.wins === 1 ? 'win' : 'wins'}</span>
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
         <AvatarStack ids={week.attendees} personById={store.personById} max={4} size={26} />
