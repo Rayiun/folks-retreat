@@ -123,9 +123,8 @@ function SameCrewChip({ onClick, label, style: s = {} }) {
   );
 }
 
-function QuickDate({ value, onChange, anchorRef }) {
+function QuickDate({ value, onChange }) {
   const [showCal, setShowCal] = useState(false);
-  const [calTop, setCalTop] = useState(160);
   const customActive = value !== TODAY_ISO;
   const pill = (label, active, onClick) => (
     <button type="button" onClick={onClick} style={{
@@ -133,24 +132,13 @@ function QuickDate({ value, onChange, anchorRef }) {
       fontSize: 14, fontWeight: 700, transition: 'all .15s', whiteSpace: 'nowrap',
       background: active ? 'var(--accent)' : 'var(--sunken)', color: active ? 'var(--accent-ink)' : 'var(--muted)' }}>{label}</button>
   );
-  const openCal = () => {
-    if (anchorRef?.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
-      setCalTop(rect.bottom + 8);
-    }
-    setShowCal(true);
-  };
   return (
-    <div>
-      {showCal && (
-        <div style={{ position: 'fixed', top: calTop, left: 18, right: 18, zIndex: 999, background: 'var(--surface)', borderRadius: 18, boxShadow: '0 4px 32px rgba(0,0,0,0.18)', padding: 14 }}>
-          <DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen />
-        </div>
-      )}
+    <div style={{ marginBottom: showCal ? 0 : 22 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         {pill('Today', !customActive, () => { onChange(TODAY_ISO); setShowCal(false); })}
-        {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, openCal)}
+        {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, () => setShowCal(true))}
       </div>
+      {showCal && <div style={{ marginTop: 10 }}><DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen /></div>}
     </div>
   );
 }
@@ -188,7 +176,6 @@ function saveTitle(t) {
 
 function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const { people } = store;
-  const anchorRef = useRef(null);
   const [cat, setCat] = useState(initialCat || 'board');
   const [date, setDate] = useState(TODAY_ISO);
   const [title, setTitle] = useState('');
@@ -285,7 +272,7 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
   return (
     <Sheet open={open} onClose={onClose} title={editing ? 'Edit match' : `Log a ${cat === 'fifa' ? 'FIFA' : 'board'} match`}>
       {/* category switch */}
-      <div ref={anchorRef} style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6, marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6, marginBottom: 14 }}>
         <button type="button" onClick={switchCat} style={{ border: 'none', background: 'none', cursor: 'pointer',
           color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
           <Icon name="shuffle" size={15} sw={2.2} /> {cat === 'fifa' ? 'Log a board game instead' : 'Log FIFA instead'}
@@ -430,7 +417,7 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
       )}
 
       <div style={{ marginTop: 20, marginBottom: 4 }}>
-        <QuickDate value={date} onChange={setDate} anchorRef={anchorRef} />
+        <QuickDate value={date} onChange={setDate} />
       </div>
 
       <Btn variant="primary" size="lg" icon="check" disabled={!canSave} onClick={save} style={{ width: '100%', marginTop: 4 }}>
