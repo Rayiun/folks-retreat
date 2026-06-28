@@ -31,9 +31,11 @@ function nightMVP(date, games, personById) {
       : g.winnerId ? [g.winnerId] : [];
     winners.forEach(id => { wins[id] = (wins[id] || 0) + 1; });
   });
-  const top = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
-  if (!top || top[1] < 1) return null;
-  return { person: personById(top[0]), wins: top[1] };
+  const sorted = Object.entries(wins).sort((a, b) => b[1] - a[1]);
+  if (!sorted.length || sorted[0][1] < 1) return null;
+  const topWins = sorted[0][1];
+  const people = sorted.filter(([, w]) => w === topWins).map(([id]) => personById(id)).filter(Boolean);
+  return { people, wins: topWins };
 }
 
 function WeekCard({ week, store, onEdit, onAvatar }) {
@@ -56,8 +58,12 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
         ) : null}
         {mvp && (
           <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--accent-soft)', borderRadius: 99, padding: '3px 9px 3px 5px' }}>
-            <Avatar person={mvp.person} size={18} />
-            <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent)' }}>MVP · {mvp.wins} {mvp.wins === 1 ? 'win' : 'wins'}</span>
+            <div style={{ display: 'flex' }}>
+              {mvp.people.map((p, i) => (
+                <span key={p.id} style={{ marginLeft: i === 0 ? 0 : -6 }}><Avatar person={p} size={18} /></span>
+              ))}
+            </div>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent)' }}>MVP · {mvp.wins} {mvp.wins === 1 ? 'win' : 'wins'}{mvp.people.length > 1 ? ' each' : ''}</span>
           </div>
         )}
       </div>
