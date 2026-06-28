@@ -812,8 +812,8 @@ function GamesStatsTab({ store, onPlayer }) {
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
         <StatTile label="Total games" value={allGames.length} sub={`${boardGames.length} board · ${fifaGames.length} FIFA`} />
-        <StatTile label="Top winner" value={topWinner?.p ? topWinner.p.name.split(' ')[0] : '—'} sub={topWinner?.w ? `${topWinner.w} wins` : ''} />
-        <StatTile label="Most active" value={topPlayed?.p ? topPlayed.p.name.split(' ')[0] : '—'} sub={topPlayed?.n ? `${topPlayed.n} games` : ''} />
+        <StatTile label="Top winner" value={topWinner?.p ? surnameOf(topWinner.p.name) : '—'} sub={topWinner?.w ? `${topWinner.w} wins` : ''} />
+        <StatTile label="Most active" value={topPlayed?.p ? surnameOf(topPlayed.p.name) : '—'} sub={topPlayed?.n ? `${topPlayed.n} games` : ''} />
         <StatTile label="Fav game" value={topTitle ? topTitle[0] : '—'} sub={topTitle ? `played ${topTitle[1]}×` : 'No board games yet'} />
       </div>
 
