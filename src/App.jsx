@@ -151,8 +151,8 @@ export default function App() {
   else screen = <StatsScreen store={store} openPeople={() => setPeopleOpen(true)} openProfile={openProfile} openShare={() => setShareOpen(true)} />;
 
   return (
-    <div style={{ ...vars, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)', WebkitOverflowScrolling: 'touch' }}>
+    <div style={{ ...vars, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'fixed', inset: 0, overflow: 'hidden' }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)', WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
         {screen}
       </div>
       <TabBar active={tab} onChange={goTo} />
