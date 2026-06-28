@@ -488,7 +488,7 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
       </div>
 
       <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '22px 0 8px' }}>Dinner</label>
-      <input value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Karak + kunafa night" style={{
+      <input value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. KFC" style={{
         width: '100%', boxSizing: 'border-box', padding: '13px 14px', borderRadius: 14, border: '1.5px solid var(--line)',
         background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', fontSize: 15.5, marginBottom: 24 }} />
 
