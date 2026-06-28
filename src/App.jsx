@@ -133,6 +133,9 @@ export default function App() {
     const next = themeKey === 'dark' ? 'light' : 'dark';
     setThemeKey(next);
     localStorage.setItem('fr_theme', next);
+    const color = next === 'dark' ? '#2e2a23' : '#f5ede0';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+    document.documentElement.style.background = color;
   };
 
   const openEditor = (weekOrDraft) => {
