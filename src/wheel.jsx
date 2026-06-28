@@ -175,6 +175,7 @@ export function WheelScreen({ store }) {
       setTimeout(() => {
         setShowResult(true);
         fanfare();
+        try { const a = new Audio('/win-sound.mp3'); a.play(); } catch (e) {}
         fireConfetti(canvasRef.current, people.map(p => p.color).concat(['oklch(0.72 0.17 28)', 'oklch(0.78 0.15 150)']));
       }, 180);
     };
