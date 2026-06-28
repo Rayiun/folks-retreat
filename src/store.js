@@ -259,11 +259,16 @@ export function awards(people, weeks, fetches, games) {
   const topWinner = people.map(p => ({ person: p, wins: wins[p.id] || 0 }))
     .filter(x => x.wins > 0).sort((a, b) => b.wins - a.wins)[0];
 
+  const topHosts = hs[0] && hs[0].hosted > 0 ? hs.filter(s => s.hosted === hs[0].hosted) : [];
+  const topFetchers = fs[0] && fs[0].fetched > 0 ? fs.filter(s => s.fetched === fs[0].fetched) : [];
+  const winnerList = people.map(p => ({ person: p, wins: wins[p.id] || 0 })).filter(x => x.wins > 0).sort((a, b) => b.wins - a.wins);
+  const topWinners = winnerList.length > 0 ? winnerList.filter(x => x.wins === winnerList[0].wins) : [];
+
   const out = [];
-  if (hs[0] && hs[0].hosted > 0) out.push({ key: 'host', label: 'Top Host', sub: hs[0].hosted + ' nights', person: hs[0].person, icon: 'crown' });
-  if (loyal) out.push({ key: 'loyal', label: 'Most Loyal', sub: loyal.rate + '% shows', person: loyal.person, icon: 'trophy' });
-  if (fs[0] && fs[0].fetched > 0) out.push({ key: 'fetch', label: 'Top Fetcher', sub: fs[0].fetched + ' runs', person: fs[0].person, icon: 'shuffle' });
-  if (topWinner) out.push({ key: 'winner', label: 'Top Winner', sub: topWinner.wins + ' wins', person: topWinner.person, icon: 'swords' });
+  if (topHosts.length) out.push({ key: 'host', label: 'Top Host', sub: topHosts[0].hosted + ' nights', people: topHosts.map(s => s.person), icon: 'crown' });
+  if (loyal) out.push({ key: 'loyal', label: 'Most Loyal', sub: loyal.rate + '% shows', people: [loyal.person], icon: 'trophy' });
+  if (topFetchers.length) out.push({ key: 'fetch', label: 'Top Fetcher', sub: topFetchers[0].fetched + ' runs', people: topFetchers.map(s => s.person), icon: 'shuffle' });
+  if (topWinners.length) out.push({ key: 'winner', label: 'Top Winner', sub: topWinners[0].wins + ' wins', people: topWinners.map(x => x.person), icon: 'swords' });
   return out;
 }
 

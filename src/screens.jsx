@@ -254,21 +254,30 @@ export function HistoryScreen({ store, openEditor, openProfile }) {
   );
 }
 
-function AwardCard({ award, onClick }) {
+function AwardCard({ award, onClickPerson }) {
+  const people = award.people || [];
   return (
-    <button onClick={onClick} style={{ border: 'var(--card-border)', cursor: 'pointer', background: 'var(--surface)', borderRadius: 18, padding: '14px 12px',
+    <div style={{ border: 'var(--card-border)', background: 'var(--surface)', borderRadius: 18, padding: '14px 12px',
       width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center',
-      boxShadow: 'var(--card-shadow)' }}>
+      boxShadow: 'var(--card-shadow)', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--accent)' }}>
         <Icon name={award.icon} size={14} sw={2.2} />
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>{award.label}</span>
       </div>
-      <Avatar person={award.person} size={44} />
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {people.map((p, i) => (
+          <button key={p.id} onClick={() => onClickPerson(p)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', marginLeft: i === 0 ? 0 : -10 }}>
+            <Avatar person={p} size={people.length > 1 ? 34 : 44} />
+          </button>
+        ))}
+      </div>
       <div>
-        <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 13.5, letterSpacing: -0.2 }}>{award.person.name}</div>
+        <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 13.5, letterSpacing: -0.2 }}>
+          {people.map(p => p.name.split(' ').pop()).join(', ')}
+        </div>
         <div style={{ color: 'var(--faint)', fontSize: 11.5, marginTop: 1 }}>{award.sub}</div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -313,7 +322,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
       </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: '2px', margin: '0 -2px 18px' }}>
-        {aw.map(a => <AwardCard key={a.key} award={a} onClick={() => openProfile(a.person)} />)}
+        {aw.map(a => <AwardCard key={a.key} award={a} onClickPerson={openProfile} />)}
       </div>
 
       <div style={{ marginBottom: 14 }}>
