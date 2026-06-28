@@ -76,7 +76,7 @@ function TabBar({ active, onChange }) {
     { id: 'wheel', icon: 'wheel', label: 'Wheel' },
     { id: 'games', icon: 'gamepad', label: 'Games' },
     { id: 'home', icon: 'home', label: 'Home' },
-    { id: 'history', icon: 'history', label: 'Gatherings' },
+    { id: 'history', icon: 'users', label: 'Gatherings' },
     { id: 'stats', icon: 'chart', label: 'Stats' },
   ];
   return (
