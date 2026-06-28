@@ -125,6 +125,7 @@ function SameCrewChip({ onClick, label, style: s = {} }) {
 
 function QuickDate({ value, onChange }) {
   const [showCal, setShowCal] = useState(false);
+  const wrapRef = useRef(null);
   const customActive = value !== TODAY_ISO;
   const pill = (label, active, onClick) => (
     <button type="button" onClick={onClick} style={{
@@ -132,8 +133,19 @@ function QuickDate({ value, onChange }) {
       fontSize: 14, fontWeight: 700, transition: 'all .15s', whiteSpace: 'nowrap',
       background: active ? 'var(--accent)' : 'var(--sunken)', color: active ? 'var(--accent-ink)' : 'var(--muted)' }}>{label}</button>
   );
+  const openCal = () => {
+    setShowCal(true);
+    setTimeout(() => {
+      if (!wrapRef.current) return;
+      let el = wrapRef.current.parentElement;
+      while (el) {
+        if (el.scrollHeight > el.clientHeight) { el.scrollTop = el.scrollHeight; break; }
+        el = el.parentElement;
+      }
+    }, 30);
+  };
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={wrapRef} style={{ position: 'relative' }}>
       {showCal && (
         <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, zIndex: 10, background: 'var(--surface)', borderRadius: 16, boxShadow: '0 -4px 24px rgba(0,0,0,0.12)', padding: 12 }}>
           <DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen />
@@ -141,7 +153,7 @@ function QuickDate({ value, onChange }) {
       )}
       <div style={{ display: 'flex', gap: 8 }}>
         {pill('Today', !customActive, () => { onChange(TODAY_ISO); setShowCal(false); })}
-        {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, () => setShowCal(true))}
+        {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, openCal)}
       </div>
     </div>
   );
