@@ -451,7 +451,7 @@ function Podium({ entries, onPlayer }) {
     const tied = [];
     while (i < entries.length && entries[i].won === val) { tied.push(entries[i]); i++; }
     groups.push({ rank: currentRank, entries: tied });
-    currentRank += tied.length;
+    currentRank += 1;
   }
   // Pad to 3 slots
   while (groups.length < 3) groups.push(null);
