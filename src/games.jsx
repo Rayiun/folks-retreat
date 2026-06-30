@@ -468,16 +468,19 @@ function Podium({ entries, onPlayer }) {
           const isActualRank = group.rank === displayRank || (displayRank === 1 && group.rank === 1);
           return (
             <div key={displayRank} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                {group.entries.map((e, i) => (
-                  <button key={e.person.id} onClick={() => onPlayer(e.person)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, marginLeft: i === 0 ? 0 : -12 }}>
-                    <TeamMark person={e.person} size={group.entries.length > 1 ? Math.round(m.av * 0.75) : m.av} ring={m.tone} crown={group.rank === 1} />
-                  </button>
-                ))}
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <button onClick={() => onPlayer(group.entries[0].person)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
+                  <TeamMark person={group.entries[0].person} size={m.av} ring={m.tone} crown={group.rank === 1} />
+                </button>
+                {group.entries.length > 1 && (
+                  <div style={{ position: 'absolute', bottom: -4, right: -10, background: 'var(--accent-soft)', color: 'var(--accent)', fontSize: 10, fontWeight: 700, borderRadius: 99, padding: '1px 6px', border: '2px solid var(--surface)' }}>
+                    ×{group.entries.length}
+                  </div>
+                )}
               </div>
               <div style={{ fontSize: displayRank === 1 ? 14 : 12.5, fontWeight: 700, color: 'var(--ink)', maxWidth: '100%',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                {group.entries.map(e => surnameOf(e.person.name)).join(', ')}
+                {group.entries.length > 1 ? 'Tied' : group.entries[0].person.name}
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, marginTop: -2 }}>{group.entries[0].won}W</div>
               <div style={{ width: '100%', height: m.ped, borderRadius: '11px 11px 0 0', background: m.pedBg, marginTop: 2,
