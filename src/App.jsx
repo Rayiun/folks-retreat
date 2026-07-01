@@ -128,9 +128,7 @@ export default function App() {
   if (!authed) return <AppGate themeVars={vars} onUnlock={() => { localStorage.setItem(GATE_KEY, '1'); setAuthed(true); }} />;
 
   if (store.loading) return (
-    <div style={{ ...vars, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: "ThmanyahSans, system-ui, sans-serif", gap: 12 }}>
-      <img src="/app-icon.png" alt="" style={{ width: 100, height: 100, borderRadius: 24 }} />
-    </div>
+    <div style={{ ...vars, height: '100dvh', background: 'var(--bg)' }} />
   );
 
   const toggleTheme = () => {
