@@ -270,7 +270,6 @@ export function awards(people, weeks, fetches, games) {
   const out = [];
   if (topHosts.length) out.push({ key: 'host', label: 'Top Host', sub: topHosts[0].hosted + ' nights', people: topHosts.map(s => s.person), icon: 'crown' });
   if (topAttendants.length) out.push({ key: 'attend', label: 'Top Attendant', sub: topAttendants[0].attended + ' nights', people: topAttendants.map(x => x.person), icon: 'users' });
-  if (loyal) out.push({ key: 'loyal', label: 'Most Loyal', sub: loyal.rate + '% shows', people: [loyal.person], icon: 'trophy' });
   if (topFetchers.length) out.push({ key: 'fetch', label: 'Top Fetcher', sub: topFetchers[0].fetched + ' runs', people: topFetchers.map(s => s.person), icon: 'shuffle' });
   if (topWinners.length) out.push({ key: 'winner', label: 'Top Winner', sub: topWinners[0].wins + ' wins', people: topWinners.map(x => x.person), icon: 'swords' });
   return out;
