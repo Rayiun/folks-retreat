@@ -128,9 +128,16 @@ export default function App() {
   if (!authed) return <AppGate themeVars={vars} onUnlock={() => { localStorage.setItem(GATE_KEY, '1'); setAuthed(true); }} />;
 
   if (store.loading) return (
-    <div style={{ ...vars, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: "ThmanyahSans, system-ui, sans-serif", gap: 12 }}>
-      <div style={{ fontFamily: 'var(--display)', fontSize: 26, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.5 }}>Folk's Retreat</div>
-      <div style={{ fontSize: 13, color: 'var(--faint)', fontWeight: 500 }}>Loading…</div>
+    <div style={{ ...vars, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: "ThmanyahSans, system-ui, sans-serif", gap: 14 }}>
+      <img src="/app-icon.png" alt="" style={{ width: 72, height: 72, borderRadius: 18 }} />
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--display)', fontSize: 20, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.4 }}>Folk's Retreat</div>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 10 }}>
+          {[1, 0.5, 0.25].map((op, i) => (
+            <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', opacity: op }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 
