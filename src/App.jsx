@@ -130,8 +130,6 @@ export default function App() {
   if (store.loading) return (
     <div style={{ ...vars, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: "ThmanyahSans, system-ui, sans-serif", gap: 12 }}>
       <img src="/app-icon.png" alt="" style={{ width: 100, height: 100, borderRadius: 24 }} />
-      <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.5 }}>Folk's Retreat</div>
-      <div style={{ fontSize: 13, color: 'var(--faint)', fontWeight: 500 }}>Loading…</div>
     </div>
   );
 
