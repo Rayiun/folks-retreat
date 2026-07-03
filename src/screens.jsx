@@ -644,7 +644,7 @@ export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds
             cursor: w._bonus ? 'default' : 'pointer' }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: w._bonus ? 'var(--accent)' : w.hostId === person.id ? 'var(--accent)' : 'var(--good)' }} />
           <div style={{ flex: 1, color: 'var(--ink)', fontSize: 14 }}>{fmtDate(w.date)}</div>
-          <div style={{ color: 'var(--faint)', fontSize: 12 }}>{w._bonus ? 'hosted' : w.hostId === person.id ? 'hosted' : 'attended'}</div>
+          <div style={{ color: 'var(--faint)', fontSize: 12 }}>{w._bonus ? 'Hosted' : w.hostId === person.id ? 'Hosted' : 'Attended'}</div>
         </div>
       ))}
       {theirWeeks.length === 0 && <div style={{ color: 'var(--muted)', fontSize: 14, padding: '8px 2px' }}>No nights yet.</div>}
