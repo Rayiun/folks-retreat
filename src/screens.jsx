@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   fmtDate, fmtDateShort, surnameOf, initials,
-  hostStats, overdueHost, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides,
+  hostStats, overdueHost, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, useAwayIds,
 } from './store.js';
 import { Avatar, AvatarStack, Icon, Sheet, Btn, Card, Segment, Stat, ConfirmDelete } from './ui.jsx';
 
@@ -79,11 +79,11 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
   );
 }
 
-export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme }) {
+export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme, awayIds, toggleAway }) {
   const { people, weeks, fetches } = store;
   const stats = hostStats(people, weeks);
   const lf = lastFetcher(fetches, store.personById);
-  const rotation = rotationOrder(people, weeks);
+  const rotation = rotationOrder(people, weeks, awayIds || []);
   const lastWeek = weeks[0];
 
   return (
@@ -134,12 +134,19 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
       <Card className="hide-scrollbar" style={{ display: 'flex', gap: 6, marginBottom: 18, overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }} pad={14}>
         {rotation.map((r, i) => (
           <button key={r.person.id} onClick={() => openProfile(r.person)} style={{ border: 'none', background: 'none', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0, width: 56, padding: 0 }}>
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0, width: 56, padding: 0,
+            opacity: r.away ? 0.38 : 1, transition: 'opacity .2s' }}>
             <div style={{ position: 'relative' }}>
-              <Avatar person={r.person} size={46} ring={i === 0} />
-              <div style={{ position: 'absolute', top: -4, left: -4, width: 18, height: 18, borderRadius: '50%', background: i === 0 ? 'var(--accent)' : 'var(--sunken)',
-                color: i === 0 ? 'var(--accent-ink)' : 'var(--muted)', fontSize: 10.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 0 2px var(--surface)' }}>{i + 1}</div>
+              <Avatar person={r.person} size={46} ring={i === 0 && !r.away} />
+              {r.away ? (
+                <div style={{ position: 'absolute', top: -4, left: -4, width: 18, height: 18, borderRadius: '50%', background: 'var(--sunken)',
+                  color: 'var(--muted)', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 0 0 2px var(--surface)' }}>✈</div>
+              ) : (
+                <div style={{ position: 'absolute', top: -4, left: -4, width: 18, height: 18, borderRadius: '50%', background: i === 0 ? 'var(--accent)' : 'var(--sunken)',
+                  color: i === 0 ? 'var(--accent-ink)' : 'var(--muted)', fontSize: 10.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 0 0 2px var(--surface)' }}>{i + 1}</div>
+              )}
             </div>
             <span style={{ fontSize: 10.5, color: 'var(--faint)', fontWeight: 500, maxWidth: 56, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.person.name}</span>
           </button>
@@ -581,13 +588,14 @@ function MiniStat({ value, label, color }) {
   );
 }
 
-export function ProfileSheet({ store, person, open, onClose, openEditor }) {
+export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds, toggleAway }) {
   if (!person) return <Sheet open={open} onClose={onClose} />;
   const { weeks, fetches } = store;
   const hs = hostStats(store.people, weeks).find(s => s.person.id === person.id) || { hosted: 0, attended: 0, lastHostedIso: null };
   const ai = attendanceInfo(person, weeks);
   const fetched = fetches.filter(f => f.personId === person.id).length;
   const theirWeeks = weeks.filter(w => w.attendees.includes(person.id) || w.hostId === person.id).slice(0, 6);
+  const isAway = (awayIds || []).includes(person.id);
   return (
     <Sheet open={open} onClose={onClose}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
@@ -603,10 +611,30 @@ export function ProfileSheet({ store, person, open, onClose, openEditor }) {
         <MiniStat value={hs.hosted} label="Hosted" color="var(--accent)" />
         <MiniStat value={ai.rate + '%'} label="Attendance" color="var(--good)" />
       </div>
-      <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <MiniStat value={ai.streak} label="Streak" />
         <MiniStat value={fetched} label="Fetched" color="oklch(0.66 0.13 295)" />
       </div>
+      {toggleAway && (
+        <button onClick={() => toggleAway(person.id)} style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          border: 'none', background: isAway ? 'var(--accent-soft)' : 'var(--sunken)',
+          borderRadius: 16, padding: '14px 16px', cursor: 'pointer', marginBottom: 18,
+          transition: 'background .18s',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>✈️</span>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: isAway ? 'var(--accent)' : 'var(--ink)' }}>Away</div>
+              <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 1 }}>Skip from host rotation</div>
+            </div>
+          </div>
+          <div style={{ width: 44, height: 26, borderRadius: 13, background: isAway ? 'var(--accent)' : 'var(--line)', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
+            <div style={{ position: 'absolute', top: 3, left: isAway ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }} />
+          </div>
+        </button>
+      )}
+
       <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Recent nights</div>
       {theirWeeks.map(w => (
         <div key={w.id} onClick={() => { onClose(); setTimeout(() => openEditor(w), 280); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', cursor: 'pointer',

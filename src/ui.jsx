@@ -143,14 +143,15 @@ export function Sheet({ open, onClose, title, children }) {
   if (!mounted) return null;
   return (
     <div onClick={onClose} style={{
-      position: 'absolute', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column',
+      position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column',
       justifyContent: 'flex-end',
       background: show ? 'rgba(20,12,8,0.42)' : 'rgba(20,12,8,0)',
       transition: 'background .28s ease', backdropFilter: show ? 'blur(2px)' : 'none',
+      pointerEvents: show ? 'auto' : 'none',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: 'var(--surface)', borderRadius: '28px 28px 0 0',
-        padding: '10px 20px 34px', maxHeight: '88%', display: 'flex', flexDirection: 'column',
+        padding: '10px 20px env(safe-area-inset-bottom, 24px)', maxHeight: '88dvh', display: 'flex', flexDirection: 'column',
         transform: show ? 'translateY(0)' : 'translateY(102%)',
         transition: 'transform .34s cubic-bezier(.22,1,.36,1)',
         boxShadow: '0 -8px 40px rgba(0,0,0,0.22)',

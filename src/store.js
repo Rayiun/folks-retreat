@@ -9,7 +9,7 @@ const LINKED_HOST_NAMES = [['A. Alzamil', 'F. Alzamil']];
 // Historical host counts before app tracking began
 const BONUS_HOSTED = {
   'M. Almutairi': 10,
-  'S. Alhazzah':  10,
+  'S. Alhazzaa':  10,
   'H. Alhoraim':  10,
   'S. Alshehri':  10,
   'R. Alturki':   12,
@@ -184,17 +184,32 @@ export function attendanceInfo(person, weeks) {
   for (const w of ordered) { if (w.attendees.includes(person.id)) streak++; else break; }
   return { attended, total, rate: total ? Math.round((attended / total) * 100) : 0, streak };
 }
-export function rotationOrder(people, weeks) {
+export function rotationOrder(people, weeks, awayIds = []) {
   const groups = linkedHostIds(people);
   return people.map(p => {
     const ids = expandHostId(p.id, groups);
     const hosted = weeks.filter(w => ids.includes(w.hostId));
     const last = hosted.length ? hosted.map(w => w.date).sort().reverse()[0] : null;
-    return { person: p, hosted: hosted.length + bonusHosted(p.name), lastHostedIso: last };
+    return { person: p, hosted: hosted.length + bonusHosted(p.name), lastHostedIso: last, away: awayIds.includes(p.id) };
   }).sort((a, b) => {
+    if (a.away !== b.away) return a.away ? 1 : -1;
     if (a.hosted !== b.hosted) return a.hosted - b.hosted;
     return (a.lastHostedIso || '0') < (b.lastHostedIso || '0') ? -1 : 1;
   });
+}
+
+export function useAwayIds() {
+  const [awayIds, setAwayIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('fr_away') || '[]'); } catch { return []; }
+  });
+  const toggle = useCallback((id) => {
+    setAwayIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      localStorage.setItem('fr_away', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  return [awayIds, toggle];
 }
 
 export function matchSides(g) {
