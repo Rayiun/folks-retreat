@@ -151,7 +151,7 @@ export function Sheet({ open, onClose, title, children }) {
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: 'var(--surface)', borderRadius: '28px 28px 0 0',
-        padding: '10px 20px env(safe-area-inset-bottom, 24px)', maxHeight: '88dvh', display: 'flex', flexDirection: 'column',
+        padding: '10px 20px 0', maxHeight: '88%', display: 'flex', flexDirection: 'column',
         transform: show ? 'translateY(0)' : 'translateY(102%)',
         transition: 'transform .34s cubic-bezier(.22,1,.36,1)',
         boxShadow: '0 -8px 40px rgba(0,0,0,0.22)',
@@ -166,7 +166,7 @@ export function Sheet({ open, onClose, title, children }) {
             </button>
           </div>
         )}
-        <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, margin: '0 -20px', padding: '0 20px', WebkitOverflowScrolling: 'touch' }}>{children}</div>
+        <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, margin: '0 -20px', padding: '0 20px env(safe-area-inset-bottom, 24px)', WebkitOverflowScrolling: 'touch' }}>{children}</div>
       </div>
     </div>
   );
