@@ -18,6 +18,7 @@ const BONUS_HOSTED = {
   'A. Almubark':  9,
   'A. Alzamil':   9,
   'F. Alzamil':   9,
+  'S. Alassafi':  8,
 };
 function bonusHosted(name) { return BONUS_HOSTED[name] || 0; }
 
