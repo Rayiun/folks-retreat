@@ -166,7 +166,7 @@ export function Sheet({ open, onClose, title, children }) {
             </button>
           </div>
         )}
-        <div style={{ overflowY: 'auto', flex: 1, margin: '0 -20px', padding: '0 20px' }}>{children}</div>
+        <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, margin: '0 -20px', padding: '0 20px', WebkitOverflowScrolling: 'touch' }}>{children}</div>
       </div>
     </div>
   );
