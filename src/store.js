@@ -6,21 +6,30 @@ const HUES = [25, 55, 95, 135, 165, 200, 230, 260, 290, 320, 345, 10, 75];
 // Linked hosts: hosting counts for all members in the same group
 const LINKED_HOST_NAMES = [['A. Alzamil', 'F. Alzamil']];
 
-// Historical host counts before app tracking began
-const BONUS_HOSTED = {
-  'M. Almutairi': 10,
-  'S. Alhazzaa':  10,
-  'H. Alhoraim':  10,
-  'S. Alshehri':  10,
-  'R. Alturki':   12,
-  'R. Alghamdi':  9,
-  'S. Alhomoud':  9,
-  'A. Almubark':  9,
-  'A. Alzamil':   9,
-  'F. Alzamil':   9,
-  'S. Alassafi':  8,
+// Historical hosting dates before app tracking began
+const BONUS_HOSTED_DATES = {
+  'M. Almutairi': ['2024-04-13','2024-06-28','2024-11-08','2024-12-06','2025-02-22','2025-07-10','2025-09-18','2026-01-08','2026-02-26','2026-05-08'],
+  'S. Alhazzaa':  ['2024-04-25','2024-08-22','2024-11-15','2024-11-21','2025-02-22','2025-07-31','2025-11-13','2026-01-22','2026-04-19','2026-05-29'],
+  'H. Alhoraim':  ['2024-05-30','2024-10-18','2024-12-26','2025-02-21','2025-03-06','2025-08-07','2025-10-23','2026-01-15','2026-04-02','2026-06-04'],
+  'S. Alshehri':  ['2024-05-09','2024-09-12','2024-10-31','2025-03-27','2025-05-15','2025-08-15','2025-11-27','2026-02-19','2026-04-16','2026-06-11'],
+  'R. Alturki':   ['2024-05-30','2024-08-16','2024-11-29','2025-01-24','2025-02-06','2025-02-14','2025-04-18','2025-07-24','2025-10-30','2025-11-06','2026-05-29','2026-06-18','2026-06-19'],
+  'R. Alghamdi':  ['2024-07-18','2024-09-27','2024-11-28','2025-05-01','2025-07-03','2025-09-08','2025-12-05','2026-02-12','2026-03-26'],
+  'S. Alhomoud':  ['2024-05-24','2024-10-11','2024-12-19','2025-02-27','2025-05-22','2025-08-28','2025-12-24','2026-03-05','2026-04-24'],
+  'A. Almubark':  ['2024-05-03','2024-07-25','2025-01-02','2025-05-29','2025-09-25','2025-12-11','2026-02-05','2026-04-30','2026-05-21'],
+  'A. Alzamil':   ['2024-04-19','2024-08-09','2024-09-20','2025-01-09','2025-05-08','2025-07-22','2025-11-20','2026-01-29','2026-05-15','2026-06-26'],
+  'F. Alzamil':   ['2024-04-19','2024-08-09','2024-09-20','2025-01-09','2025-05-08','2025-07-22','2025-11-20','2026-01-29','2026-05-15','2026-06-26'],
+  'S. Alassafi':  ['2024-07-11','2024-12-12','2025-01-16','2025-04-24','2025-06-26','2025-09-25','2026-01-01','2026-03-16'],
 };
-function bonusHosted(name) { return BONUS_HOSTED[name] || 0; }
+export function bonusHostedDates(name) { return BONUS_HOSTED_DATES[name] || []; }
+function bonusHosted(name) { return bonusHostedDates(name).length; }
+function bonusLastHosted(name) { const d = bonusHostedDates(name); return d.length ? [...d].sort().reverse()[0] : null; }
+function mergedLastHosted(name, loggedLastIso) {
+  const b = bonusLastHosted(name);
+  if (!loggedLastIso && !b) return null;
+  if (!loggedLastIso) return b;
+  if (!b) return loggedLastIso;
+  return loggedLastIso > b ? loggedLastIso : b;
+}
 
 function linkedHostIds(people) {
   return LINKED_HOST_NAMES.map(group =>
@@ -196,7 +205,7 @@ export function rotationOrder(people, weeks, awayIds = []) {
     const ids = expandHostId(p.id, groups);
     const hosted = weeks.filter(w => ids.includes(w.hostId));
     const last = hosted.length ? hosted.map(w => w.date).sort().reverse()[0] : null;
-    return { person: p, hosted: hosted.length + bonusHosted(p.name), lastHostedIso: last, away: awayIds.includes(p.id) };
+    return { person: p, hosted: hosted.length + bonusHosted(p.name), lastHostedIso: mergedLastHosted(p.name, last), away: awayIds.includes(p.id) };
   }).sort((a, b) => {
     if (a.away !== b.away) return a.away ? 1 : -1;
     if (a.hosted !== b.hosted) return a.hosted - b.hosted;
@@ -318,7 +327,8 @@ export function hostStats(people, weeks) {
     const ids = expandHostId(p.id, groups);
     const hostedWeeks = weeks.filter(w => ids.includes(w.hostId));
     const attended = weeks.filter(w => w.attendees.includes(p.id)).length;
-    const lastHostedIso = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
+    const loggedLast = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
+    const lastHostedIso = mergedLastHosted(p.name, loggedLast);
     return { person: p, hosted: hostedWeeks.length + bonusHosted(p.name), attended, lastHostedIso };
   }).sort((a, b) => b.hosted - a.hosted || b.attended - a.attended);
 }
@@ -328,7 +338,8 @@ export function overdueHost(people, weeks) {
   const stats = people.map(p => {
     const ids = expandHostId(p.id, groups);
     const hostedWeeks = weeks.filter(w => ids.includes(w.hostId));
-    const lastHostedIso = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
+    const loggedLast = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
+    const lastHostedIso = mergedLastHosted(p.name, loggedLast);
     return { person: p, hosted: hostedWeeks.length + bonusHosted(p.name), lastHostedIso };
   });
   stats.sort((a, b) => {

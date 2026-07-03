@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   fmtDate, fmtDateShort, surnameOf, initials,
-  hostStats, overdueHost, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, useAwayIds,
+  hostStats, overdueHost, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, useAwayIds, bonusHostedDates,
 } from './store.js';
 import { Avatar, AvatarStack, Icon, Sheet, Btn, Card, Segment, Stat, ConfirmDelete } from './ui.jsx';
 
@@ -594,7 +594,9 @@ export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds
   const hs = hostStats(store.people, weeks).find(s => s.person.id === person.id) || { hosted: 0, attended: 0, lastHostedIso: null };
   const ai = attendanceInfo(person, weeks);
   const fetched = fetches.filter(f => f.personId === person.id).length;
-  const theirWeeks = weeks.filter(w => w.attendees.includes(person.id) || w.hostId === person.id).slice(0, 6);
+  const loggedWeeks = weeks.filter(w => w.attendees.includes(person.id) || w.hostId === person.id);
+  const bonusDates = bonusHostedDates(person.name).map(date => ({ id: 'bonus-' + date, date, _bonus: true }));
+  const theirWeeks = [...loggedWeeks, ...bonusDates].sort((a, b) => b.date > a.date ? 1 : -1).slice(0, 8);
   const isAway = (awayIds || []).includes(person.id);
   return (
     <Sheet open={open} onClose={onClose}>
@@ -637,11 +639,12 @@ export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds
 
       <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Recent nights</div>
       {theirWeeks.map(w => (
-        <div key={w.id} onClick={() => { onClose(); setTimeout(() => openEditor(w), 280); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', cursor: 'pointer',
-          borderBottom: '1px solid var(--line)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: w.hostId === person.id ? 'var(--accent)' : 'var(--good)' }} />
+        <div key={w.id} onClick={w._bonus ? undefined : () => { onClose(); setTimeout(() => openEditor(w), 280); }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderBottom: '1px solid var(--line)',
+            cursor: w._bonus ? 'default' : 'pointer' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: w._bonus ? 'var(--accent)' : w.hostId === person.id ? 'var(--accent)' : 'var(--good)' }} />
           <div style={{ flex: 1, color: 'var(--ink)', fontSize: 14 }}>{fmtDate(w.date)}</div>
-          <div style={{ color: 'var(--faint)', fontSize: 12 }}>{w.hostId === person.id ? 'hosted' : 'attended'}</div>
+          <div style={{ color: 'var(--faint)', fontSize: 12 }}>{w._bonus ? 'hosted' : w.hostId === person.id ? 'hosted' : 'attended'}</div>
         </div>
       ))}
       {theirWeeks.length === 0 && <div style={{ color: 'var(--muted)', fontSize: 14, padding: '8px 2px' }}>No nights yet.</div>}
