@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { surnameOf, fmtDateShort, fmtDate, matchSides, gameStats, recentGames, playerGameRecord, playerMatches, rivalryStats } from './store.js';
-import { Avatar, Icon, Sheet, Btn, Card, Segment, ConfirmDelete } from './ui.jsx';
+import { Avatar, Icon, Sheet, Btn, Card, Segment, ConfirmDelete, PasscodeGate } from './ui.jsx';
 import { SectionTitle, PageHead, DateField } from './screens.jsx';
 
 const BOARD_TITLES = ['Baloot', 'Codenames', 'Catan', 'Carrom', 'Dominoes', 'Monopoly', 'Uno', 'Risk'];
@@ -900,9 +900,11 @@ export function GamesScreen({ store }) {
   const [player, setPlayer] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+  const [pendingGame, setPendingGame] = useState(null);
 
   const openPlayer = (p) => { if (p) { setPlayer(p); setPlayerOpen(true); } };
-  const openEdit = (g) => { setEditingGame(g); setEditorOpen(true); };
+  const openEdit = (g) => { setPendingGame(g); setGateOpen(true); };
   const standings = gameStats(people, games, cat);
   const recent = recentGames(games, cat);
   const rest = standings.slice(3);
@@ -961,6 +963,7 @@ export function GamesScreen({ store }) {
         </>
       )}
 
+      <PasscodeGate open={gateOpen} onClose={() => { setGateOpen(false); setPendingGame(null); }} onConfirm={() => { setEditingGame(pendingGame); setEditorOpen(true); }} message="Enter passcode to edit match" />
       <MatchEditor store={store} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingGame(null); }} initialCat={cat} editing={editingGame} />
       <GamePlayerSheet store={store} person={player} open={playerOpen} onClose={() => setPlayerOpen(false)} />
     </div>

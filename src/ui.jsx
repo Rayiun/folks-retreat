@@ -235,6 +235,51 @@ export function Stat({ value, label, color }) {
   );
 }
 
+export function PasscodeGate({ open, onClose, onConfirm, message = 'Enter passcode to continue' }) {
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState(false);
+  const MAX = 4;
+  const close = () => { onClose(); setPw(''); setErr(false); };
+  const press = (d) => {
+    if (err) { setPw(String(d)); setErr(false); return; }
+    if (pw.length >= MAX) return;
+    const next = pw + d;
+    setPw(next);
+    if (next.length === MAX) {
+      if (next === '1416') { setTimeout(() => { onConfirm(); close(); }, 120); }
+      else { setTimeout(() => { setErr(true); setPw(''); }, 120); }
+    }
+  };
+  const del = () => { setErr(false); setPw(p => p.slice(0, -1)); };
+  const KEYS = [1,2,3,4,5,6,7,8,9,null,0,'⌫'];
+  return (
+    <Sheet open={open} onClose={close} title="Enter passcode">
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <p style={{ margin: '0 0 20px', color: err ? 'oklch(0.58 0.18 25)' : 'var(--muted)', fontSize: 14, fontWeight: 600, transition: 'color .2s' }}>
+          {err ? 'Wrong passcode' : message}
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
+          {Array.from({ length: MAX }).map((_, i) => (
+            <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: pw.length > i ? (err ? 'oklch(0.58 0.18 25)' : 'var(--ink)') : 'var(--line)', transition: 'background .15s' }} />
+          ))}
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 280, margin: '0 auto 16px' }}>
+        {KEYS.map((k, i) => {
+          if (k === null) return <div key={i} />;
+          const isBack = k === '⌫';
+          return (
+            <button key={i} onClick={() => isBack ? del() : press(k)} style={{ height: 68, borderRadius: 22, border: 'none', cursor: 'pointer', fontFamily: isBack ? 'inherit' : 'var(--display)', fontSize: isBack ? 22 : 26, fontWeight: 600, background: isBack ? 'transparent' : 'var(--sunken)', color: isBack ? 'var(--muted)' : 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .1s, transform .08s', boxShadow: isBack ? 'none' : 'var(--card-shadow)' }}
+              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.93)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.93)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+            >{k}</button>
+          );
+        })}
+      </div>
+      <Btn variant="ghost" onClick={close} style={{ width: '100%' }}>Cancel</Btn>
+    </Sheet>
+  );
+}
+
 export function ConfirmDelete({ open, onClose, onConfirm }) {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState(false);
