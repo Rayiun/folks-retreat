@@ -91,7 +91,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0 14px' }}>
         <div>
           <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600, letterSpacing: 0.2 }}>Since 2020</div>
-          <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--display)', fontSize: 29, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.6 }}>Folk's Retreat</h1>
+          <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--display)', fontSize: 29, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.6 }}>Folk's Retreat TEST</h1>
         </div>
         <button onClick={toggleTheme} aria-label={isDark ? 'Light mode' : 'Dark mode'} style={{ width: 46, height: 46, borderRadius: isDark ? 14 : '50%', background: 'var(--accent-soft)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform .12s, border-radius .25s' }}
           onMouseDown={e => e.currentTarget.style.transform = 'scale(0.92)'}
