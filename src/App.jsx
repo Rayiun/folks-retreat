@@ -74,7 +74,7 @@ function AppGate({ onUnlock, themeVars: vars }) {
 function TabBar({ active, onChange }) {
   const tabs = [
     { id: 'wheel', icon: 'wheel', label: 'Shame' },
-    { id: 'games', icon: 'trophy', label: 'Games' },
+    { id: 'games', icon: 'trophy', label: 'Arena' },
     { id: 'home', icon: 'home', label: 'Home' },
     { id: 'history', icon: 'users', label: 'Nights' },
     { id: 'stats', icon: 'chart', label: 'Stats' },
