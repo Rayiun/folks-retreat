@@ -181,7 +181,13 @@ export function attendanceInfo(person, weeks) {
   const attended = weeks.filter(w => w.attendees.includes(person.id)).length;
   const ordered = [...weeks].sort((a, b) => (a.date < b.date ? 1 : -1));
   let streak = 0;
-  for (const w of ordered) { if (w.attendees.includes(person.id)) streak++; else break; }
+  for (const w of ordered) {
+    if (w.attendees.includes(person.id)) { streak++; }
+    else {
+      const day = new Date(w.date + 'T12:00:00').getDay(); // 4=Thu, 5=Fri
+      if (day === 4 || day === 5) break;
+    }
+  }
   return { attended, total, rate: total ? Math.round((attended / total) * 100) : 0, streak };
 }
 export function rotationOrder(people, weeks, awayIds = []) {
