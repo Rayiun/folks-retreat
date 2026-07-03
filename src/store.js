@@ -6,6 +6,15 @@ const HUES = [25, 55, 95, 135, 165, 200, 230, 260, 290, 320, 345, 10, 75];
 // Linked hosts: hosting counts for all members in the same group
 const LINKED_HOST_NAMES = [['A. Alzamil', 'F. Alzamil']];
 
+// Historical host counts before app tracking began
+const BONUS_HOSTED = {
+  'M. Almutairi': 10,
+  'S. Alhazzah':  10,
+  'H. Alhoraim':  10,
+  'S. Alshehri':  10,
+};
+function bonusHosted(name) { return BONUS_HOSTED[name] || 0; }
+
 function linkedHostIds(people) {
   return LINKED_HOST_NAMES.map(group =>
     group.map(n => people.find(p => p.name === n)?.id).filter(Boolean)
@@ -174,7 +183,7 @@ export function rotationOrder(people, weeks) {
     const ids = expandHostId(p.id, groups);
     const hosted = weeks.filter(w => ids.includes(w.hostId));
     const last = hosted.length ? hosted.map(w => w.date).sort().reverse()[0] : null;
-    return { person: p, hosted: hosted.length, lastHostedIso: last };
+    return { person: p, hosted: hosted.length + bonusHosted(p.name), lastHostedIso: last };
   }).sort((a, b) => {
     if (a.hosted !== b.hosted) return a.hosted - b.hosted;
     return (a.lastHostedIso || '0') < (b.lastHostedIso || '0') ? -1 : 1;
@@ -282,7 +291,7 @@ export function hostStats(people, weeks) {
     const hostedWeeks = weeks.filter(w => ids.includes(w.hostId));
     const attended = weeks.filter(w => w.attendees.includes(p.id)).length;
     const lastHostedIso = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
-    return { person: p, hosted: hostedWeeks.length, attended, lastHostedIso };
+    return { person: p, hosted: hostedWeeks.length + bonusHosted(p.name), attended, lastHostedIso };
   }).sort((a, b) => b.hosted - a.hosted || b.attended - a.attended);
 }
 
@@ -292,7 +301,7 @@ export function overdueHost(people, weeks) {
     const ids = expandHostId(p.id, groups);
     const hostedWeeks = weeks.filter(w => ids.includes(w.hostId));
     const lastHostedIso = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
-    return { person: p, hosted: hostedWeeks.length, lastHostedIso };
+    return { person: p, hosted: hostedWeeks.length + bonusHosted(p.name), lastHostedIso };
   });
   stats.sort((a, b) => {
     if (a.hosted !== b.hosted) return a.hosted - b.hosted;
