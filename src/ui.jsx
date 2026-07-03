@@ -143,7 +143,7 @@ export function Sheet({ open, onClose, title, children }) {
   if (!mounted) return null;
   return (
     <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column',
+      position: 'absolute', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column',
       justifyContent: 'flex-end',
       background: show ? 'rgba(20,12,8,0.42)' : 'rgba(20,12,8,0)',
       transition: 'background .28s ease', backdropFilter: show ? 'blur(2px)' : 'none',
