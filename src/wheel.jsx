@@ -116,7 +116,7 @@ export function WheelScreen({ store }) {
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState(null);
   const [showResult, setShowResult] = useState(false);
-  const [fairMode, setFairMode] = useState(true);
+  const [fairMode, setFairMode] = useState(false);
   const [saved, setSaved] = useState(false);
   const [deletingFetch, setDeletingFetch] = useState(null);
   const canvasRef = useRef(null);
