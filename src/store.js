@@ -22,7 +22,7 @@ const BONUS_HOSTED_DATES = {
 };
 export function bonusHostedDates(name) { return BONUS_HOSTED_DATES[name] || []; }
 function bonusHosted(name) { return bonusHostedDates(name).length; }
-function bonusLastHosted(name) { const d = bonusHostedDates(name); return d.length ? [...d].sort().reverse()[0] : null; }
+function bonusLastHosted(name) { const d = bonusHostedDates(name); return d.length ? d[d.length - 1] : null; }
 function mergedLastHosted(name, loggedLastIso) {
   const b = bonusLastHosted(name);
   if (!loggedLastIso && !b) return null;
@@ -302,9 +302,6 @@ export function awards(people, weeks, fetches, games) {
     const sides = matchSides(g);
     sides.winners.forEach(id => { wins[id] = (wins[id] || 0) + 1; });
   });
-  const topWinner = people.map(p => ({ person: p, wins: wins[p.id] || 0 }))
-    .filter(x => x.wins > 0).sort((a, b) => b.wins - a.wins)[0];
-
   const topHosts = hs[0] && hs[0].hosted > 0 ? hs.filter(s => s.hosted === hs[0].hosted) : [];
   const topFetchers = fs[0] && fs[0].fetched > 0 ? fs.filter(s => s.fetched === fs[0].fetched) : [];
   const winnerList = people.map(p => ({ person: p, wins: wins[p.id] || 0 })).filter(x => x.wins > 0).sort((a, b) => b.wins - a.wins);
@@ -334,19 +331,11 @@ export function hostStats(people, weeks) {
 }
 
 export function overdueHost(people, weeks) {
-  const groups = linkedHostIds(people);
-  const stats = people.map(p => {
-    const ids = expandHostId(p.id, groups);
-    const hostedWeeks = weeks.filter(w => ids.includes(w.hostId));
-    const loggedLast = hostedWeeks.length ? hostedWeeks.map(w => w.date).sort().reverse()[0] : null;
-    const lastHostedIso = mergedLastHosted(p.name, loggedLast);
-    return { person: p, hosted: hostedWeeks.length + bonusHosted(p.name), lastHostedIso };
-  });
-  stats.sort((a, b) => {
+  const sorted = [...hostStats(people, weeks)].sort((a, b) => {
     if (a.hosted !== b.hosted) return a.hosted - b.hosted;
     const ad = a.lastHostedIso || '0000-00-00';
     const bd = b.lastHostedIso || '0000-00-00';
     return ad < bd ? -1 : ad > bd ? 1 : 0;
   });
-  return stats[0];
+  return sorted[0];
 }

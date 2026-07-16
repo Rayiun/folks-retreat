@@ -79,7 +79,7 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
   );
 }
 
-export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme, awayIds, toggleAway }) {
+export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme, awayIds }) {
   const { people, weeks, fetches } = store;
   const stats = hostStats(people, weeks);
   const lf = lastFetcher(fetches, store.personById);
@@ -642,9 +642,9 @@ export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds
         <div key={w.id} onClick={w._bonus ? undefined : () => { onClose(); setTimeout(() => openEditor(w), 280); }}
           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderBottom: '1px solid var(--line)',
             cursor: w._bonus ? 'default' : 'pointer' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: w._bonus ? 'var(--accent)' : w.hostId === person.id ? 'var(--accent)' : 'var(--good)' }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: (w._bonus || w.hostId === person.id) ? 'var(--accent)' : 'var(--good)' }} />
           <div style={{ flex: 1, color: 'var(--ink)', fontSize: 14 }}>{fmtDate(w.date)}</div>
-          <div style={{ color: 'var(--faint)', fontSize: 12 }}>{w._bonus ? 'Hosted' : w.hostId === person.id ? 'Hosted' : 'Attended'}</div>
+          <div style={{ color: 'var(--faint)', fontSize: 12 }}>{(w._bonus || w.hostId === person.id) ? 'Hosted' : 'Attended'}</div>
         </div>
       ))}
       {theirWeeks.length === 0 && <div style={{ color: 'var(--muted)', fontSize: 14, padding: '8px 2px' }}>No nights yet.</div>}

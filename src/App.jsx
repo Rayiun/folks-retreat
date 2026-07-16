@@ -107,7 +107,7 @@ function TabBar({ active, onChange }) {
 export default function App() {
   const store = useStore();
   const [awayIds, toggleAway] = useAwayIds();
-  const [authed] = useState(true);
+  const [authed, setAuthed] = useState(true);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem('fr_theme') || 'light');
   const [tab, setTab] = useState(() => sessionStorage.getItem('fr-tab') || 'home');
   const [editor, setEditor] = useState({ open: false, editing: null, draft: null });

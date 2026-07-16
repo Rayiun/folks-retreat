@@ -13,7 +13,6 @@ export const THEMES = {
     line: 'oklch(0.89 0.014 68)',
     accent: 'oklch(0.605 0.14 42)',
     accentInk: 'oklch(0.99 0.01 75)',
-    accentSoft: 'oklch(0.93 0.045 50)',
     good: 'oklch(0.58 0.075 150)',
     goodSoft: 'oklch(0.93 0.04 150)',
     display: "ThmanyahSerif",
@@ -29,7 +28,6 @@ export const THEMES = {
     line: 'oklch(0.305 0.013 58)',
     accent: 'oklch(0.70 0.155 46)',
     accentInk: 'oklch(0.135 0.02 50)',
-    accentSoft: 'oklch(0.315 0.075 48)',
     good: 'oklch(0.76 0.105 152)',
     goodSoft: 'oklch(0.30 0.055 152)',
     display: "ThmanyahSerif",
@@ -101,7 +99,6 @@ const PATHS = {
   check: 'M4 12.5 9 17.5 20 6.5',
   trash: 'M5 7h14M9 7V4.5h6V7M7 7l1 13h8l1-13',
   edit: 'M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4',
-  chevron: 'M9 6l6 6-6 6',
   sparkle: 'M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z',
   x: 'M6 6l12 12M18 6 6 18',
   calendar: 'M4 8h16M7 3v3M17 3v3M5 6h14v15H5V6Z',
@@ -281,72 +278,5 @@ export function PasscodeGate({ open, onClose, onConfirm, message = 'Enter passco
 }
 
 export function ConfirmDelete({ open, onClose, onConfirm }) {
-  const [pw, setPw] = useState('');
-  const [err, setErr] = useState(false);
-  const MAX = 4;
-
-  const close = () => { onClose(); setPw(''); setErr(false); };
-
-  const press = (d) => {
-    if (err) { setPw(String(d)); setErr(false); return; }
-    if (pw.length >= MAX) return;
-    const next = pw + d;
-    setPw(next);
-    if (next.length === MAX) {
-      if (next === '1416') { setTimeout(() => { onConfirm(); close(); }, 120); }
-      else { setTimeout(() => { setErr(true); setPw(''); }, 120); }
-    }
-  };
-
-  const del = () => { setErr(false); setPw(p => p.slice(0, -1)); };
-
-  const KEYS = [1,2,3,4,5,6,7,8,9,null,0,'⌫'];
-
-  return (
-    <Sheet open={open} onClose={close} title="Enter passcode">
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <p style={{ margin: '0 0 20px', color: err ? 'oklch(0.58 0.18 25)' : 'var(--muted)', fontSize: 14, fontWeight: 600, transition: 'color .2s' }}>
-          {err ? 'Wrong passcode' : 'Enter passcode to delete'}
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-          {Array.from({ length: MAX }).map((_, i) => (
-            <div key={i} style={{
-              width: 14, height: 14, borderRadius: '50%',
-              background: pw.length > i
-                ? (err ? 'oklch(0.58 0.18 25)' : 'var(--ink)')
-                : 'var(--line)',
-              transition: 'background .15s',
-            }} />
-          ))}
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 280, margin: '0 auto 16px' }}>
-        {KEYS.map((k, i) => {
-          if (k === null) return <div key={i} />;
-          const isBack = k === '⌫';
-          return (
-            <button key={i} onClick={() => isBack ? del() : press(k)} style={{
-              height: 68, borderRadius: 22, border: 'none', cursor: 'pointer',
-              fontFamily: isBack ? 'inherit' : 'var(--display)',
-              fontSize: isBack ? 22 : 26, fontWeight: 600,
-              background: isBack ? 'transparent' : 'var(--sunken)',
-              color: isBack ? 'var(--muted)' : 'var(--ink)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background .1s, transform .08s',
-              boxShadow: isBack ? 'none' : 'var(--card-shadow)',
-            }}
-              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.93)'}
-              onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-              onTouchStart={e => e.currentTarget.style.transform = 'scale(0.93)'}
-              onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-            >{k}</button>
-          );
-        })}
-      </div>
-
-      <Btn variant="ghost" onClick={close} style={{ width: '100%' }}>Cancel</Btn>
-    </Sheet>
-  );
+  return <PasscodeGate open={open} onClose={onClose} onConfirm={onConfirm} message="Enter passcode to delete" />;
 }
