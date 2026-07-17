@@ -588,8 +588,9 @@ function MiniStat({ value, label, color }) {
   );
 }
 
-export function ProfileSheet({ store, person, open, onClose, openEditor }) {
-  if (!person) return <Sheet open={open} onClose={onClose} />;
+export function ProfileSheet({ store, person: personProp, open, onClose, openEditor }) {
+  if (!personProp) return <Sheet open={open} onClose={onClose} />;
+  const person = store.people.find(p => p.id === personProp.id) || personProp;
   const { weeks, fetches } = store;
   const hs = hostStats(store.people, weeks).find(s => s.person.id === person.id) || { hosted: 0, attended: 0, lastHostedIso: null };
   const ai = attendanceInfo(person, weeks);
