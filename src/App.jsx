@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useStore, useAwayIds } from './store.js';
+import { useStore } from './store.js';
 import { THEMES, themeVars, Icon } from './ui.jsx';
 import { HomeScreen, HistoryScreen, StatsScreen, WeekEditor, PeopleManager, ProfileSheet, ShareSheet } from './screens.jsx';
 import { GamesScreen } from './games.jsx';
@@ -106,7 +106,6 @@ function TabBar({ active, onChange }) {
 
 export default function App() {
   const store = useStore();
-  const [awayIds, toggleAway] = useAwayIds();
   const [authed, setAuthed] = useState(true);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem('fr_theme') || 'light');
   const [tab, setTab] = useState(() => sessionStorage.getItem('fr-tab') || 'home');
@@ -151,7 +150,7 @@ export default function App() {
   const goTo = (id) => { setTab(id); sessionStorage.setItem('fr-tab', id); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
 
   let screen;
-  if (tab === 'home') screen = <HomeScreen store={store} openEditor={openEditor} goTo={goTo} openProfile={openProfile} isDark={isDark} toggleTheme={toggleTheme} awayIds={awayIds} toggleAway={toggleAway} />;
+  if (tab === 'home') screen = <HomeScreen store={store} openEditor={openEditor} goTo={goTo} openProfile={openProfile} isDark={isDark} toggleTheme={toggleTheme} />;
   else if (tab === 'history') screen = <HistoryScreen store={store} openEditor={openEditor} openProfile={openProfile} />;
   else if (tab === 'wheel') screen = <WheelScreen store={store} />;
   else if (tab === 'games') screen = <GamesScreen store={store} />;
@@ -166,7 +165,7 @@ export default function App() {
 
       <WeekEditor store={store} open={editor.open} editing={editor.editing} draft={editor.draft} onClose={closeEditor} />
       <PeopleManager store={store} open={peopleOpen} onClose={() => setPeopleOpen(false)} />
-      <ProfileSheet store={store} person={profile.person} open={profile.open} onClose={() => setProfile(p => ({ ...p, open: false }))} openEditor={openEditor} awayIds={awayIds} toggleAway={toggleAway} />
+      <ProfileSheet store={store} person={profile.person} open={profile.open} onClose={() => setProfile(p => ({ ...p, open: false }))} openEditor={openEditor} />
       <ShareSheet store={store} open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );

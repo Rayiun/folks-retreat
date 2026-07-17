@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   fmtDate, fmtDateShort, surnameOf, initials,
-  hostStats, overdueHost, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, useAwayIds, bonusHostedDates,
+  hostStats, overdueHost, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, bonusHostedDates,
 } from './store.js';
 import { Avatar, AvatarStack, Icon, Sheet, Btn, Card, Segment, Stat, ConfirmDelete } from './ui.jsx';
 
@@ -79,11 +79,11 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
   );
 }
 
-export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme, awayIds }) {
+export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme }) {
   const { people, weeks, fetches } = store;
   const stats = hostStats(people, weeks);
   const lf = lastFetcher(fetches, store.personById);
-  const rotation = rotationOrder(people, weeks, awayIds || []);
+  const rotation = rotationOrder(people, weeks);
   const lastWeek = weeks[0];
 
   return (
@@ -588,7 +588,7 @@ function MiniStat({ value, label, color }) {
   );
 }
 
-export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds, toggleAway }) {
+export function ProfileSheet({ store, person, open, onClose, openEditor }) {
   if (!person) return <Sheet open={open} onClose={onClose} />;
   const { weeks, fetches } = store;
   const hs = hostStats(store.people, weeks).find(s => s.person.id === person.id) || { hosted: 0, attended: 0, lastHostedIso: null };
@@ -597,7 +597,7 @@ export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds
   const loggedWeeks = weeks.filter(w => w.attendees.includes(person.id) || w.hostId === person.id);
   const bonusDates = bonusHostedDates(person.name).map(date => ({ id: 'bonus-' + date, date, _bonus: true }));
   const theirWeeks = [...loggedWeeks, ...bonusDates].sort((a, b) => b.date > a.date ? 1 : -1).slice(0, 8);
-  const isAway = (awayIds || []).includes(person.id);
+  const isAway = person.away || false;
   return (
     <Sheet open={open} onClose={onClose}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
@@ -617,8 +617,7 @@ export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds
         <MiniStat value={ai.streak} label="Streak" />
         <MiniStat value={fetched} label="Fetched" color="oklch(0.66 0.13 295)" />
       </div>
-      {toggleAway && (
-        <button onClick={() => toggleAway(person.id)} style={{
+      <button onClick={() => store.toggleAway(person.id)} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           border: 'none', background: isAway ? 'var(--accent-soft)' : 'var(--sunken)',
           borderRadius: 16, padding: '14px 16px', cursor: 'pointer', marginBottom: 18,
@@ -635,7 +634,6 @@ export function ProfileSheet({ store, person, open, onClose, openEditor, awayIds
             <div style={{ position: 'absolute', top: 3, left: isAway ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }} />
           </div>
         </button>
-      )}
 
       <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Recent nights</div>
       {theirWeeks.map(w => (

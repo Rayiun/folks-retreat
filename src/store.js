@@ -62,7 +62,7 @@ export function fmtDateShort(iso) {
   const d = new Date(iso + 'T00:00:00');
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
-const mapPerson = r => ({ id: r.id, name: r.name, color: r.color });
+const mapPerson = r => ({ id: r.id, name: r.name, color: r.color, away: r.away || false });
 const mapWeek   = r => ({ id: r.id, date: r.date, hostId: r.host_id, attendees: r.attendees || [], note: r.note || '' });
 const mapFetch  = r => ({ id: r.id, personId: r.person_id, date: r.date });
 const mapGame   = r => ({ id: r.id, cat: r.cat, title: r.title || '', date: r.date, format: r.format,
@@ -163,6 +163,12 @@ export function useStore() {
     await supabase.from('games').delete().eq('id', id);
   }, []);
 
+  const toggleAway = useCallback(async (id) => {
+    const person = state.people.find(p => p.id === id);
+    if (!person) return;
+    await supabase.from('people').update({ away: !person.away }).eq('id', id);
+  }, [state.people]);
+
   const resetAll = useCallback(async () => {
     await Promise.all([
       supabase.from('games').delete().neq('id', ''),
@@ -172,7 +178,7 @@ export function useStore() {
     ]);
   }, []);
 
-  return { ...state, personById, addWeek, updateWeek, deleteWeek, addPerson, removePerson, addFetch, deleteFetch, addGame, updateGame, deleteGame, resetAll };
+  return { ...state, personById, addWeek, updateWeek, deleteWeek, addPerson, removePerson, addFetch, deleteFetch, addGame, updateGame, deleteGame, resetAll, toggleAway };
 }
 
 export function fetchStats(people, fetches) {
@@ -199,13 +205,13 @@ export function attendanceInfo(person, weeks) {
   }
   return { attended, total, rate: total ? Math.round((attended / total) * 100) : 0, streak };
 }
-export function rotationOrder(people, weeks, awayIds = []) {
+export function rotationOrder(people, weeks) {
   const groups = linkedHostIds(people);
   return people.map(p => {
     const ids = expandHostId(p.id, groups);
     const hosted = weeks.filter(w => ids.includes(w.hostId));
     const last = hosted.length ? hosted.map(w => w.date).sort().reverse()[0] : null;
-    return { person: p, hosted: hosted.length + bonusHosted(p.name), lastHostedIso: mergedLastHosted(p.name, last), away: awayIds.includes(p.id) };
+    return { person: p, hosted: hosted.length + bonusHosted(p.name), lastHostedIso: mergedLastHosted(p.name, last), away: p.away || false };
   }).sort((a, b) => {
     if (a.away !== b.away) return a.away ? 1 : -1;
     if (a.hosted !== b.hosted) return a.hosted - b.hosted;
@@ -213,19 +219,6 @@ export function rotationOrder(people, weeks, awayIds = []) {
   });
 }
 
-export function useAwayIds() {
-  const [awayIds, setAwayIds] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('fr_away') || '[]'); } catch { return []; }
-  });
-  const toggle = useCallback((id) => {
-    setAwayIds(prev => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      localStorage.setItem('fr_away', JSON.stringify(next));
-      return next;
-    });
-  }, []);
-  return [awayIds, toggle];
-}
 
 export function matchSides(g) {
   if (g.format === 'teams') {
