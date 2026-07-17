@@ -97,7 +97,13 @@ export function useStore() {
   useEffect(() => {
     reload();
     const ch = supabase.channel('fr-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'people' },  reload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'people' }, payload => {
+        if (payload.eventType === 'UPDATE') {
+          setState(s => ({ ...s, people: s.people.map(p => p.id === payload.new.id ? mapPerson(payload.new) : p) }));
+        } else {
+          reload();
+        }
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'weeks' },   reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'fetches' }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'games' },   reload)
