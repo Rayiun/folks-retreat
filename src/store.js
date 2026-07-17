@@ -166,6 +166,7 @@ export function useStore() {
   const toggleAway = useCallback(async (id) => {
     const person = state.people.find(p => p.id === id);
     if (!person) return;
+    setState(s => ({ ...s, people: s.people.map(p => p.id === id ? { ...p, away: !p.away } : p) }));
     await supabase.from('people').update({ away: !person.away }).eq('id', id);
   }, [state.people]);
 
