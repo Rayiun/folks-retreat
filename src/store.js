@@ -76,23 +76,40 @@ function todayIso() {
 }
 
 export function useStore() {
-  const [state, setState] = useState({ people: [], weeks: [], fetches: [], games: [], loading: true });
+  const [state, setState] = useState({ people: [], weeks: [], fetches: [], games: [], loading: true, error: null });
 
   const reload = useCallback(async () => {
-    const [p, w, f, g] = await Promise.all([
-      supabase.from('people').select('*').order('name'),
-      supabase.from('weeks').select('*').order('date', { ascending: false }),
-      supabase.from('fetches').select('*').order('date', { ascending: false }),
-      supabase.from('games').select('*').order('date', { ascending: false }),
-    ]);
-    setState({
-      people: (p.data || []).map(mapPerson),
-      weeks:  (w.data || []).map(mapWeek),
-      fetches:(f.data || []).map(mapFetch),
-      games:  (g.data || []).map(mapGame),
-      loading: false,
-    });
+    try {
+      const [p, w, f, g] = await Promise.all([
+        supabase.from('people').select('*').order('name'),
+        supabase.from('weeks').select('*').order('date', { ascending: false }),
+        supabase.from('fetches').select('*').order('date', { ascending: false }),
+        supabase.from('games').select('*').order('date', { ascending: false }),
+      ]);
+      // Supabase resolves with { data, error } instead of rejecting on HTTP/RLS errors.
+      const err = p.error || w.error || f.error || g.error;
+      if (err) throw err;
+      setState({
+        people: (p.data || []).map(mapPerson),
+        weeks:  (w.data || []).map(mapWeek),
+        fetches:(f.data || []).map(mapFetch),
+        games:  (g.data || []).map(mapGame),
+        loading: false,
+        error: null,
+      });
+    } catch (e) {
+      // Network failure, DNS error, or a query error would otherwise leave
+      // loading stuck true forever → permanent blank page. Surface it instead,
+      // keeping any data we already have so a failed realtime refresh is harmless.
+      console.error('Failed to load data', e);
+      setState(s => ({ ...s, loading: false, error: e?.message || 'Could not reach the server' }));
+    }
   }, []);
+
+  const retry = useCallback(() => {
+    setState(s => ({ ...s, loading: true, error: null }));
+    reload();
+  }, [reload]);
 
   useEffect(() => {
     reload();
@@ -185,7 +202,7 @@ export function useStore() {
     ]);
   }, []);
 
-  return { ...state, personById, addWeek, updateWeek, deleteWeek, addPerson, removePerson, addFetch, deleteFetch, addGame, updateGame, deleteGame, resetAll, toggleAway };
+  return { ...state, reload, retry, personById, addWeek, updateWeek, deleteWeek, addPerson, removePerson, addFetch, deleteFetch, addGame, updateGame, deleteGame, resetAll, toggleAway };
 }
 
 export function fetchStats(people, fetches) {

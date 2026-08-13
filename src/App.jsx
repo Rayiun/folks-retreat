@@ -104,6 +104,32 @@ function TabBar({ active, onChange }) {
   );
 }
 
+function LoadingScreen({ vars }) {
+  return (
+    <div style={{ ...vars, height: '100dvh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 30, height: 30, borderRadius: '50%', border: '3px solid var(--line)', borderTopColor: 'var(--accent)', animation: 'fr-spin 0.7s linear infinite' }} />
+      <style>{`@keyframes fr-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+function ErrorScreen({ vars, message, onRetry }) {
+  return (
+    <div style={{ ...vars, fontFamily: "ThmanyahSans, system-ui, sans-serif", height: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 40px', textAlign: 'center' }}>
+      <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 700, color: 'var(--ink)', marginBottom: 8 }}>Can't load right now</div>
+      <div style={{ fontSize: 14, color: 'var(--muted)', fontWeight: 500, marginBottom: 28, maxWidth: 300, lineHeight: 1.5 }}>
+        Check your connection and try again.
+        {message ? <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 8 }}>{message}</div> : null}
+      </div>
+      <button onClick={onRetry} style={{
+        border: 'none', cursor: 'pointer', fontFamily: 'var(--display)', fontSize: 16, fontWeight: 600,
+        padding: '12px 32px', borderRadius: 16, background: 'var(--accent)', color: 'var(--accent-ink)',
+        boxShadow: 'var(--card-shadow)',
+      }}>Retry</button>
+    </div>
+  );
+}
+
 export default function App() {
   const store = useStore();
   const [authed, setAuthed] = useState(true);
@@ -127,9 +153,9 @@ export default function App() {
 
   if (!authed) return <AppGate themeVars={vars} onUnlock={() => { localStorage.setItem(GATE_KEY, '1'); setAuthed(true); }} />;
 
-  if (store.loading) return (
-    <div style={{ ...vars, height: '100dvh', background: 'var(--bg)' }} />
-  );
+  if (store.error && !store.people.length) return <ErrorScreen vars={vars} message={store.error} onRetry={store.retry} />;
+
+  if (store.loading) return <LoadingScreen vars={vars} />;
 
   const toggleTheme = () => {
     const next = themeKey === 'dark' ? 'light' : 'dark';
