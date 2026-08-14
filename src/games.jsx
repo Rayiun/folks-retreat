@@ -212,9 +212,14 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
         if (editing.score) setSoloScore({ w: editing.score[0], l: editing.score[1] });
       }
     } else {
-      setCat(initialCat || 'board'); reset();
-      // pre-fill teams from most recent game tonight
-      const tonight = store.games.filter(g => g.date === TODAY_ISO && g.format === 'teams');
+      const newCat = initialCat || 'board';
+      setCat(newCat); reset();
+      // Pre-fill teams from the most recent team game tonight in the SAME category
+      // — board and FIFA are tracked separately, so a FIFA log shouldn't inherit
+      // board-game teams (or vice versa).
+      const tonight = store.games
+        .filter(g => g.date === TODAY_ISO && g.format === 'teams' && g.cat === newCat)
+        .sort((a, b) => (a.id < b.id ? 1 : -1));
       if (tonight.length > 0) {
         const last = tonight[0];
         const a = {}; (last.teamA || []).forEach(id => a[id] = 'A'); (last.teamB || []).forEach(id => a[id] = 'B');
@@ -266,7 +271,25 @@ function MatchEditor({ store, open, onClose, initialCat, editing }) {
     onClose();
   };
 
-  const switchCat = () => { setCat(nc => nc === 'fifa' ? 'board' : 'fifa'); setTeamWinner(null); setSoloWinner(null); setSoloScore({ w: 0, l: 0 }); setScore({ A: 0, B: 0 }); setTitle(''); };
+  const switchCat = () => {
+    const target = cat === 'fifa' ? 'board' : 'fifa';
+    setCat(target);
+    setTeamWinner(null); setSoloWinner(null); setSoloScore({ w: 0, l: 0 }); setScore({ A: 0, B: 0 }); setTitle('');
+    // For a new game, re-pull the target category's most recent teams so board
+    // and FIFA stay separate even after switching. Editing keeps its own teams.
+    if (!editing) {
+      const tonight = store.games
+        .filter(g => g.date === TODAY_ISO && g.format === 'teams' && g.cat === target)
+        .sort((a, b) => (a.id < b.id ? 1 : -1));
+      if (tonight.length > 0) {
+        const last = tonight[0];
+        const a = {}; (last.teamA || []).forEach(id => a[id] = 'A'); (last.teamB || []).forEach(id => a[id] = 'B');
+        setAssign(a); setActiveTeam('A'); setTeamsFromNight(true);
+      } else {
+        setAssign({}); setActiveTeam('A'); setTeamsFromNight(false);
+      }
+    }
+  };
   const suggestions = savedTitles.filter(t => t.toLowerCase().includes(title.toLowerCase()) && t !== title);
 
   return (
