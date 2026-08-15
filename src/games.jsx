@@ -526,7 +526,7 @@ function LocalAvatarStack({ ids, personById, size = 22, onPlayer }) {
   );
 }
 
-function MatchRow({ store, game, onPlayer, onEdit }) {
+function MatchRow({ store, game, onPlayer, onSelect }) {
   const pById = store.personById;
   const isTeams = game.format === 'teams';
 
@@ -572,13 +572,95 @@ function MatchRow({ store, game, onPlayer, onEdit }) {
 
   return (
     <>
-      <Card onClick={() => onEdit(game)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, cursor: 'pointer' }} pad={13}>
+      <Card onClick={() => onSelect(game)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, cursor: 'pointer' }} pad={13}>
         {body}
         <div style={{ textAlign: 'right' }}>
           <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{fmtDateShort(game.date)}</span>
         </div>
       </Card>
     </>
+  );
+}
+
+function DetailPlayers({ store, ids, win, onPlayer }) {
+  if (!ids.length) return <div style={{ fontSize: 13.5, color: 'var(--faint)' }}>—</div>;
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {ids.map(id => {
+        const p = store.personById(id);
+        return (
+          <button key={id} type="button" onClick={() => onPlayer(p)} style={{
+            display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', border: 'none',
+            borderRadius: 99, padding: '4px 13px 4px 4px', fontFamily: 'inherit',
+            background: win ? 'var(--accent-soft)' : 'var(--sunken)' }}>
+            <Avatar person={p} size={26} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: win ? 'var(--accent)' : 'var(--muted)' }}>{p?.name || 'Unknown'}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MetaRow({ label, value, last }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+      padding: '11px 2px', borderBottom: last ? 'none' : '1px solid var(--line)' }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>{label}</span>
+      <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{value}</span>
+    </div>
+  );
+}
+
+function GameDetailSheet({ store, game, open, onClose, onPlayer, onEdit }) {
+  if (!game) return <Sheet open={open} onClose={onClose} title="" />;
+  const { players, winners } = matchSides(game);
+  const losers = players.filter(id => !winners.includes(id));
+  const isTeams = game.format === 'teams';
+  const scoreTxt = game.score
+    ? (isTeams
+        ? (game.winner === 'A' ? `${game.score[0]}–${game.score[1]}` : `${game.score[1]}–${game.score[0]}`)
+        : `${game.score[0]}–${game.score[1]}`)
+    : null;
+
+  return (
+    <Sheet open={open} onClose={onClose} title={game.cat === 'fifa' ? 'FIFA' : (game.title || 'Match')}>
+      <Card style={{ textAlign: 'center', marginBottom: 20 }} pad={20}>
+        <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--muted)' }}>
+          {isTeams && winners.length > 1 ? 'Winning team' : 'Winner'}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 12, margin: '14px 0 10px', flexWrap: 'wrap' }}>
+          {winners.map(id => {
+            const p = store.personById(id);
+            return (
+              <div key={id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <TeamMark person={p} size={52} ring="var(--accent)" crown onClick={() => onPlayer(p)} />
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink)', maxWidth: 72,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p?.name || 'Unknown'}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ fontFamily: 'var(--display)', fontSize: scoreTxt ? 27 : 17, fontWeight: 700, color: 'var(--accent)', letterSpacing: -0.5 }}>
+          {scoreTxt || 'won'}
+        </div>
+      </Card>
+
+      <Lbl top>{isTeams && losers.length > 1 ? 'Other team' : 'Also played'}</Lbl>
+      <DetailPlayers store={store} ids={losers} onPlayer={onPlayer} />
+
+      <Lbl>Details</Lbl>
+      <Card pad={14} style={{ marginBottom: 20 }}>
+        <MetaRow label="Date" value={fmtDate(game.date)} />
+        <MetaRow label="Game" value={game.cat === 'fifa' ? 'FIFA' : (game.title || 'Board game')} />
+        <MetaRow label="Format" value={isTeams ? 'Teams' : 'Free-for-all'} />
+        <MetaRow label="Players" value={players.length} last />
+      </Card>
+
+      <Btn variant="ghost" icon="edit" onClick={() => onEdit(game)} style={{ width: '100%', marginBottom: 8 }}>
+        Edit match
+      </Btn>
+    </Sheet>
   );
 }
 
@@ -651,7 +733,7 @@ function GamePlayerSheet({ store, person, open, onClose }) {
   );
 }
 
-function DayGroups({ store, games, onPlayer, onEdit }) {
+function DayGroups({ store, games, onPlayer, onSelect }) {
   const [selected, setSelected] = useState(null);
   const grouped = games.reduce((acc, g) => { (acc[g.date] = acc[g.date] || []).push(g); return acc; }, {});
   const dates = Object.keys(grouped).sort((a, b) => (a < b ? 1 : -1));
@@ -680,7 +762,7 @@ function DayGroups({ store, games, onPlayer, onEdit }) {
         );
       })}
       <Sheet open={!!selected} onClose={() => setSelected(null)} title={selected ? fmtDate(selected) : ''}>
-        {selectedGames.map(g => <MatchRow key={g.id} store={store} game={g} onPlayer={id => { setSelected(null); onPlayer(id); }} onEdit={g => { setSelected(null); onEdit(g); }} />)}
+        {selectedGames.map(g => <MatchRow key={g.id} store={store} game={g} onPlayer={id => { setSelected(null); onPlayer(id); }} onSelect={g => { setSelected(null); onSelect(g); }} />)}
       </Sheet>
     </>
   );
@@ -902,9 +984,12 @@ export function GamesScreen({ store }) {
   const [showAll, setShowAll] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [pendingGame, setPendingGame] = useState(null);
+  const [detailGame, setDetailGame] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const openPlayer = (p) => { if (p) { setPlayer(p); setPlayerOpen(true); } };
-  const openEdit = (g) => { setPendingGame(g); setGateOpen(true); };
+  const openDetail = (g) => { setDetailGame(g); setDetailOpen(true); };
+  const openEdit = (g) => { setDetailOpen(false); setPendingGame(g); setGateOpen(true); };
   const standings = gameStats(people, games, cat);
   const recent = recentGames(games, cat);
   const rest = standings.slice(3);
@@ -959,10 +1044,12 @@ export function GamesScreen({ store }) {
       {recent.length > 0 && (
         <>
           <SectionTitle>Recent results</SectionTitle>
-          <DayGroups store={store} games={recent} onPlayer={openPlayer} onEdit={openEdit} />
+          <DayGroups store={store} games={recent} onPlayer={openPlayer} onSelect={openDetail} />
         </>
       )}
 
+      <GameDetailSheet store={store} game={detailGame} open={detailOpen} onClose={() => setDetailOpen(false)}
+        onPlayer={p => { setDetailOpen(false); openPlayer(p); }} onEdit={openEdit} />
       <PasscodeGate open={gateOpen} onClose={() => { setGateOpen(false); setPendingGame(null); }} onConfirm={() => { setEditingGame(pendingGame); setEditorOpen(true); }} message="Enter passcode to edit match" />
       <MatchEditor store={store} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingGame(null); }} initialCat={cat} editing={editingGame} />
       <GamePlayerSheet store={store} person={player} open={playerOpen} onClose={() => setPlayerOpen(false)} />
