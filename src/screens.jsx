@@ -597,7 +597,7 @@ export function ProfileSheet({ store, person: personProp, open, onClose, openEdi
   const fetched = fetches.filter(f => f.personId === person.id).length;
   const loggedWeeks = weeks.filter(w => w.attendees.includes(person.id) || w.hostId === person.id);
   const bonusDates = bonusHostedDates(person.name).map(date => ({ id: 'bonus-' + date, date, _bonus: true }));
-  const theirWeeks = [...loggedWeeks, ...bonusDates].sort((a, b) => b.date > a.date ? 1 : -1).slice(0, 8);
+  const theirWeeks = [...loggedWeeks, ...bonusDates].sort((a, b) => b.date > a.date ? 1 : -1);
   const isAway = person.away || false;
   return (
     <Sheet open={open} onClose={onClose}>
@@ -636,7 +636,7 @@ export function ProfileSheet({ store, person: personProp, open, onClose, openEdi
           </div>
         </button>
 
-      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Recent nights</div>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Nights · {theirWeeks.length}</div>
       {theirWeeks.map(w => (
         <div key={w.id} onClick={w._bonus ? undefined : () => { onClose(); setTimeout(() => openEditor(w), 280); }}
           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderBottom: '1px solid var(--line)',
@@ -647,6 +647,7 @@ export function ProfileSheet({ store, person: personProp, open, onClose, openEdi
         </div>
       ))}
       {theirWeeks.length === 0 && <div style={{ color: 'var(--muted)', fontSize: 14, padding: '8px 2px' }}>No nights yet.</div>}
+      <div style={{ height: 24 }} />
     </Sheet>
   );
 }
