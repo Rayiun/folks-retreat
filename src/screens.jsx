@@ -3,7 +3,7 @@ import { todayIso } from './dates.js';
 import { useState, useEffect, useRef } from 'react';
 import {
   fmtDate, fmtDateShort, initials,
-  hostStats, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, bonusHostedDates,
+  hostStats, fetchStats, gameStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, bonusHostedDates,
 } from './store.js';
 import { Avatar, AvatarStack, Icon, Sheet, Btn, Card, Segment, Stat, ConfirmDelete } from './ui.jsx';
 
@@ -300,11 +300,17 @@ function AwardCard({ award, onClickPerson }) {
 export function StatsScreen({ store, openPeople, openProfile, openShare }) {
   const { people, weeks, fetches, games } = store;
   const [mode, setMode] = useState('hosted');
+  const [winningCategory, setWinningCategory] = useState('all');
   const aw = awards(people, weeks, fetches, games);
 
   let rows;
   if (mode === 'fetched') {
     rows = fetchStats(people, fetches).map(s => ({ person: s.person, val: s.fetched, sub: s.fetched ? 'delivery runs' : 'never fetched' }));
+  } else if (mode === 'winning') {
+    const standings = gameStats(people, games, winningCategory);
+    rows = standings.map(s => ({ person: s.person, val: s.won, sub: `${s.winRate}% win rate · ${s.played} played` }));
+    const rankedIds = new Set(standings.map(s => s.person.id));
+    rows.push(...people.filter(p => !rankedIds.has(p.id)).map(person => ({ person, val: 0, sub: 'no matches yet' })));
   } else {
     rows = hostStats(people, weeks).map(s => {
       if (mode === 'hosted') return { person: s.person, val: s.hosted, sub: s.lastHostedIso ? 'last ' + fmtDateShort(s.lastHostedIso) : 'never hosted' };
@@ -314,7 +320,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
     rows.sort((a, b) => b.val - a.val);
   }
   const max = Math.max(1, ...rows.map(r => r.val));
-  const barColor = mode === 'hosted' ? 'var(--accent)' : mode === 'attended' ? 'var(--good)' : 'oklch(0.66 0.13 295)';
+  const barColor = mode === 'hosted' ? 'var(--accent)' : mode === 'attended' ? 'var(--good)' : mode === 'winning' ? 'var(--accent)' : 'oklch(0.66 0.13 295)';
   const medals = ['oklch(0.78 0.14 85)', 'oklch(0.74 0.02 250)', 'oklch(0.62 0.11 50)'];
 
   return (
@@ -342,8 +348,16 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <Segment value={mode} onChange={setMode} options={[{ value: 'hosted', label: 'Hosting' }, { value: 'attended', label: 'Attended' }, { value: 'fetched', label: 'Fetched' }]} />
+        <Segment value={mode} onChange={setMode} options={[{ value: 'hosted', label: 'Hosting' }, { value: 'attended', label: 'Attended' }, { value: 'fetched', label: 'Fetched' }, { value: 'winning', label: 'Winning' }]} />
       </div>
+
+      {mode === 'winning' && (
+        <div role="group" aria-label="Winning category" style={{ marginBottom: 14 }}>
+          <Segment value={winningCategory} onChange={setWinningCategory} options={[
+            { value: 'all', label: 'All' }, { value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Others' },
+          ]} />
+        </div>
+      )}
 
       {(() => {
         const uniqueVals = [...new Set(rows.map(r => r.val))].sort((a, b) => b - a);

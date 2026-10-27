@@ -181,6 +181,7 @@ function StandingRow({ rank, entry, onClick }) {
       <Avatar person={p} size={36} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+        <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 3 }}>{entry.winRate}% win rate · {entry.played} played</div>
         <div style={{ height: 4, borderRadius: 99, background: 'var(--sunken)', marginTop: 6, overflow: 'hidden', maxWidth: 130 }}>
           <div style={{ height: '100%', width: entry.winRate + '%', background: 'var(--accent)', borderRadius: 99, opacity: 0.85 }} />
         </div>

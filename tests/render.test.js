@@ -19,6 +19,8 @@ test('screens and editors render with synthetic records, without production requ
     for (const Component of [screens.HomeScreen, screens.HistoryScreen, screens.StatsScreen, GamesScreen, WheelScreen]) {
       assert.ok(renderToString(React.createElement(Component, { store, openEditor: noop, goTo: noop, openProfile: noop, openPeople: noop, openShare: noop, toggleTheme: noop })).length);
     }
+    const stats = renderToString(React.createElement(screens.StatsScreen, { store, openPeople: noop, openProfile: noop, openShare: noop }));
+    assert.match(stats, />Winning<\/button>/);
     const arena = renderToString(React.createElement(GamesScreen, { store }));
     assert.match(arena, /Arena stats filter/);
     assert.match(arena, /aria-pressed="true"[^>]*>All</);
@@ -32,6 +34,11 @@ test('screens and editors render with synthetic records, without production requ
       assert.match(fullTable, new RegExp(`aria-pressed="true"[^>]*>${label}<`));
       assert.match(fullTable, /No .*matches yet/);
     }
+    const standingsTable = renderToString(React.createElement(FullStandingsSheet, {
+      open: true, onClose: noop, cat: 'all', onCategoryChange: noop, onPlayer: noop,
+      standings: [{ person: people[0], won: 3, lost: 1, played: 4, winRate: 75 }],
+    }));
+    assert.match(standingsTable.replace(/<!--.*?-->/g, ''), /75% win rate · 4 played/);
     const week = { id: 'w1', date: '2026-10-23', hostId: 'a', attendees: ['a'], note: '' };
     const weekForm = renderToString(React.createElement(screens.WeekEditor, { store, editing: week, open: true, onClose: noop }));
     assert.match(weekForm, /Edit night/);
