@@ -10,7 +10,7 @@ test('screens and editors render with synthetic records, without production requ
   const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false, watch: null }, optimizeDeps: { noDiscovery: true, include: [] }, appType: 'custom' });
   try {
     const screens = await server.ssrLoadModule('/src/screens.jsx');
-    const { GamesScreen, MatchEditor } = await server.ssrLoadModule('/src/games.jsx');
+    const { GamesScreen, MatchEditor, FullStandingsSheet } = await server.ssrLoadModule('/src/games.jsx');
     const { WheelScreen } = await server.ssrLoadModule('/src/wheel.jsx');
     const { ConfirmDelete } = await server.ssrLoadModule('/src/ui.jsx');
     const people = [{ id: 'a', name: 'Test Member', color: '#987', away: false }, { id: 'b', name: 'Other Member', color: '#789', away: false }];
@@ -24,6 +24,14 @@ test('screens and editors render with synthetic records, without production requ
     assert.match(arena, /aria-pressed="true"[^>]*>All</);
     assert.match(arena, /Log a match/);
     assert.match(arena, /No matches yet/);
+    for (const [cat, label] of [['all', 'All'], ['fifa', 'FIFA'], ['board', 'Others']]) {
+      const fullTable = renderToString(React.createElement(FullStandingsSheet, {
+        open: true, onClose: noop, standings: [], cat, onCategoryChange: noop, onPlayer: noop,
+      }));
+      assert.match(fullTable, /Full standings filter/);
+      assert.match(fullTable, new RegExp(`aria-pressed="true"[^>]*>${label}<`));
+      assert.match(fullTable, /No .*matches yet/);
+    }
     const week = { id: 'w1', date: '2026-10-23', hostId: 'a', attendees: ['a'], note: '' };
     const weekForm = renderToString(React.createElement(screens.WeekEditor, { store, editing: week, open: true, onClose: noop }));
     assert.match(weekForm, /Edit night/);

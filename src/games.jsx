@@ -542,6 +542,39 @@ function RivalriesSection({ store, cat }) {
   );
 }
 
+function ArenaCategoryFilter({ cat, onChange, label = 'Arena stats filter' }) {
+  return (
+    <div role="group" aria-label={label} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+        <span style={{ color: 'var(--muted)', fontSize: 12, marginRight: 4 }}>Stats</span>
+        {[{ value: 'all', label: 'All' }, { value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Others' }].map(option => (
+          <button key={option.value} type="button" aria-pressed={cat === option.value} onClick={() => onChange(option.value)} style={{
+            border: 'none', borderRadius: 99, padding: '8px 14px', minHeight: 38, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            background: cat === option.value ? 'var(--accent-soft)' : 'transparent', color: cat === option.value ? 'var(--accent)' : 'var(--muted)',
+          }}>{option.label}</button>
+        ))}
+      </div>
+  );
+}
+
+export function FullStandingsSheet({ open, onClose, standings, cat, onCategoryChange, onPlayer }) {
+  const uniqueVals = [...new Set(standings.map(s => s.won))].sort((a, b) => b - a);
+  return (
+    <Sheet open={open} onClose={onClose} title="Full standings">
+      <ArenaCategoryFilter cat={cat} onChange={onCategoryChange} label="Full standings filter" />
+      <Card pad={8}>
+        {standings.length ? standings.map((e, i) => (
+          <div key={e.person.id}>
+            {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
+            <StandingRow rank={uniqueVals.indexOf(e.won) + 1} entry={e} onClick={() => { onClose(); onPlayer(e.person); }} />
+          </div>
+        )) : <div style={{ padding: 20, textAlign: 'center', color: 'var(--muted)' }}>
+          {cat === 'all' ? 'No matches yet' : `No ${cat === 'fifa' ? 'FIFA' : 'Others'} matches yet`}
+        </div>}
+      </Card>
+    </Sheet>
+  );
+}
+
 export function GamesScreen({ store }) {
   const { people, games } = store;
   const [cat, setCat] = useState('all');
@@ -563,15 +596,7 @@ export function GamesScreen({ store }) {
   return (
     <div style={{ padding: '4px 18px 28px' }}>
       <PageHead title="The Arena" sub="Bragging rights, officially logged!" />
-      <div role="group" aria-label="Arena stats filter" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
-        <span style={{ color: 'var(--muted)', fontSize: 12, marginRight: 4 }}>Stats</span>
-        {[{ value: 'all', label: 'All' }, { value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Others' }].map(option => (
-          <button key={option.value} type="button" aria-pressed={cat === option.value} onClick={() => { setCat(option.value); setShowAll(false); }} style={{
-            border: 'none', borderRadius: 99, padding: '8px 14px', minHeight: 38, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-            background: cat === option.value ? 'var(--accent-soft)' : 'transparent', color: cat === option.value ? 'var(--accent)' : 'var(--muted)',
-          }}>{option.label}</button>
-        ))}
-      </div>
+      <ArenaCategoryFilter cat={cat} onChange={setCat} />
 
       {standings.length > 0 ? (
         <>
@@ -584,20 +609,7 @@ export function GamesScreen({ store }) {
               <Icon name="list" size={15} sw={2.2} /> Full table · {standings.length} players
             </button>
           )}
-          <Sheet open={showAll} onClose={() => setShowAll(false)} title="Full standings">
-            <Card pad={8}>
-              {standings.map((e, i) => {
-                const uniqueVals = [...new Set(standings.map(s => s.won))].sort((a, b) => b - a);
-                const rank = uniqueVals.indexOf(e.won) + 1;
-                return (
-                  <div key={e.person.id}>
-                    {i > 0 && <div style={{ height: 1, background: 'var(--line)', margin: '0 2px' }} />}
-                    <StandingRow rank={rank} entry={e} onClick={() => { setShowAll(false); openPlayer(e.person); }} />
-                  </div>
-                );
-              })}
-            </Card>
-          </Sheet>
+
         </>
       ) : (
         <Card style={{ textAlign: 'center', marginBottom: 18 }} pad={26}>
@@ -605,6 +617,9 @@ export function GamesScreen({ store }) {
           <div style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 4 }}>Someone's scared to lose. Log the first match.</div>
         </Card>
       )}
+
+      <FullStandingsSheet open={showAll} onClose={() => setShowAll(false)} standings={standings}
+        cat={cat} onCategoryChange={setCat} onPlayer={openPlayer} />
 
       <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
         Log a match
