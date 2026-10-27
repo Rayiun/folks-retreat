@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { lastFetcher, surnameOf, initials, fmtDateShort } from './store.js';
+import { lastFetcher, initials, fmtDateShort } from './store.js';
 import { Avatar, Icon, Sheet, Btn, ConfirmDelete } from './ui.jsx';
 
 let _actx = null;
 function ensureCtx() {
-  if (!_actx) { try { _actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (!_actx) { try { _actx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
   if (_actx.state === 'suspended') _actx.resume();
   return _actx;
 }
@@ -19,19 +19,6 @@ function blip(freq, dur = 0.06, vol = 0.12) {
   o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
 }
 function tick() { blip(500 + Math.random() * 80, 0.05, 0.10); }
-function fanfare() {
-  const notes = [523.25, 659.25, 783.99, 1046.5];
-  const c = ensureCtx(); if (!c) return;
-  notes.forEach((f, i) => {
-    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + i * 0.11;
-    o.type = 'triangle'; o.frequency.value = f;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.2, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
-    o.connect(g).connect(c.destination); o.start(t); o.stop(t + 0.55);
-  });
-}
-
 function fireConfetti(canvas, colors) {
   if (!canvas) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -46,7 +33,6 @@ function fireConfetti(canvas, colors) {
     rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.4,
     color: colors[Math.floor(Math.random() * colors.length)], life: 0,
   }));
-  let raf;
   const start = performance.now();
   function frame(now) {
     const elapsed = now - start;
@@ -61,10 +47,10 @@ function fireConfetti(canvas, colors) {
         ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
       }
     }
-    if (alive) raf = requestAnimationFrame(frame);
+    if (alive) requestAnimationFrame(frame);
     else ctx.clearRect(0, 0, W, H);
   }
-  raf = requestAnimationFrame(frame);
+  requestAnimationFrame(frame);
 }
 
 function polar(cx, cy, r, deg) {
@@ -129,7 +115,7 @@ export function WheelScreen({ store }) {
 
   const toggle = (id) => {
     if (spinning) return;
-    setSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+    setSelected(prev => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s; });
   };
   const setAll = (on) => { if (!spinning) setSelected(on ? new Set(people.map(p => p.id)) : new Set()); };
 
@@ -174,7 +160,7 @@ export function WheelScreen({ store }) {
       setWinner(win);
       setTimeout(() => {
         setShowResult(true);
-        try { const a = new Audio('/win-sound.mp3'); a.play(); } catch (e) {}
+        try { const a = new Audio('/win-sound.mp3'); a.play(); } catch {}
         fireConfetti(canvasRef.current, people.map(p => p.color).concat(['oklch(0.72 0.17 28)', 'oklch(0.78 0.15 150)']));
       }, 180);
     };
@@ -307,7 +293,7 @@ export function WheelScreen({ store }) {
 
       <ConfirmDelete open={!!deletingFetch} onClose={() => setDeletingFetch(null)} onConfirm={() => store.deleteFetch(deletingFetch)} />
 
-      <Sheet open={showResult} onClose={() => setShowResult(false)}>
+      <Sheet open={showResult} onClose={store.saving ? undefined : () => setShowResult(false)}>
         {winner && (
           <div style={{ textAlign: 'center', padding: '6px 4px 8px' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 16 }}>
@@ -320,13 +306,13 @@ export function WheelScreen({ store }) {
             <p style={{ margin: '10px auto 22px', color: 'var(--muted)', fontSize: 16, maxWidth: 260 }}>
               Is tonight's sucker 🖕🏼
             </p>
-            <Btn icon={saved ? 'check' : 'plus'} disabled={saved}
-              onClick={() => { store.addFetch(winner.id); setSaved(true); }}
+            <Btn icon={saved ? 'check' : 'plus'} disabled={saved || store.saving}
+              onClick={async () => { if (await store.addFetch(winner.id)) setSaved(true); }}
               variant={saved ? 'soft' : 'primary'} size="lg" style={{ width: '100%', marginBottom: 10 }}>
-              {saved ? 'Saved to the fetch tally' : "Save as the night's fetcher"}
+              {store.saving ? 'Saving…' : saved ? 'Saved to the fetch tally' : "Save as the night's fetcher"}
             </Btn>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <Btn variant="ghost" onClick={() => setShowResult(false)} style={{ flex: 1 }}>Done</Btn>
+              <Btn variant="ghost" disabled={store.saving} onClick={() => setShowResult(false)} style={{ flex: 1 }}>Done</Btn>
               <Btn variant="ghost" icon="shuffle" onClick={() => { setShowResult(false); setTimeout(spin, 320); }} style={{ flex: 1 }}>Spin again</Btn>
             </div>
           </div>

@@ -1,54 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initials } from './store.js';
 
-export const THEMES = {
-  light: {
-    label: 'Light', dark: false,
-    bg: 'oklch(0.962 0.014 70)',
-    surface: 'oklch(0.995 0.006 75)',
-    sunken: 'oklch(0.945 0.016 68)',
-    ink: 'oklch(0.28 0.024 52)',
-    muted: 'oklch(0.53 0.022 58)',
-    faint: 'oklch(0.70 0.02 60)',
-    line: 'oklch(0.89 0.014 68)',
-    accent: 'oklch(0.605 0.14 42)',
-    accentInk: 'oklch(0.99 0.01 75)',
-    good: 'oklch(0.58 0.075 150)',
-    goodSoft: 'oklch(0.93 0.04 150)',
-    display: "ThmanyahSerif",
-  },
-  dark: {
-    label: 'Dark', dark: true,
-    bg: 'oklch(0.225 0.011 57)',
-    surface: 'oklch(0.275 0.013 58)',
-    sunken: 'oklch(0.245 0.012 57)',
-    ink: 'oklch(0.967 0.010 74)',
-    muted: 'oklch(0.76 0.016 64)',
-    faint: 'oklch(0.58 0.016 60)',
-    line: 'oklch(0.305 0.013 58)',
-    accent: 'oklch(0.70 0.155 46)',
-    accentInk: 'oklch(0.135 0.02 50)',
-    good: 'oklch(0.76 0.105 152)',
-    goodSoft: 'oklch(0.30 0.055 152)',
-    display: "ThmanyahSerif",
-  },
-};
-
-export function themeVars(key) {
-  const t = THEMES[key] || THEMES.light;
-  return {
-    '--bg': t.bg, '--surface': t.surface, '--sunken': t.sunken,
-    '--ink': t.ink, '--muted': t.muted, '--faint': t.faint, '--line': t.line,
-    '--accent': t.accent, '--accent-ink': t.accentInk,
-    '--accent-soft': `color-mix(in oklch, var(--accent) ${t.dark ? 26 : 15}%, var(--surface))`,
-    '--good': t.good, '--good-soft': t.goodSoft, '--display': t.display,
-    '--card-shadow': t.dark
-      ? '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 6px rgba(0,0,0,0.36), 0 10px 28px rgba(0,0,0,0.42)'
-      : '0 1px 2px rgba(0,0,0,0.04), 0 6px 18px rgba(0,0,0,0.035)',
-    '--card-border': t.dark ? '1px solid oklch(0.34 0.013 58)' : '1px solid transparent',
-  };
-}
-
 export function Avatar({ person, size = 40, ring = false, dim = false }) {
   if (!person) return (
     <div style={{ width: size, height: size, borderRadius: '50%', background: 'var(--sunken)',
@@ -146,7 +98,7 @@ export function Sheet({ open, onClose, title, children }) {
       transition: 'background .28s ease', backdropFilter: show ? 'blur(2px)' : 'none',
       pointerEvents: show ? 'auto' : 'none',
     }}>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div role="dialog" aria-modal="true" aria-label={title || 'Details'} onClick={e => e.stopPropagation()} style={{
         background: 'var(--surface)', borderRadius: '28px 28px 0 0',
         padding: '10px 20px 0', maxHeight: '88%', display: 'flex', flexDirection: 'column',
         transform: show ? 'translateY(0)' : 'translateY(102%)',
@@ -157,7 +109,7 @@ export function Sheet({ open, onClose, title, children }) {
         {title && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h2 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: 23, fontWeight: 600, color: 'var(--ink)', letterSpacing: -0.3 }}>{title}</h2>
-            <button onClick={onClose} style={{ border: 'none', background: 'var(--sunken)', width: 34, height: 34, borderRadius: '50%',
+            <button type="button" aria-label="Close" disabled={!onClose} onClick={onClose} style={{ border: 'none', background: 'var(--sunken)', width: 34, height: 34, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--muted)' }}>
               <Icon name="x" size={18} sw={2.2} />
             </button>
@@ -186,7 +138,7 @@ export function Btn({ children, onClick, variant = 'primary', size = 'md', icon,
     danger: { background: 'transparent', color: 'oklch(0.58 0.16 25)' },
   };
   return (
-    <button onClick={disabled ? undefined : onClick} style={{ ...base, ...variants[variant], ...s }}
+    <button type="button" disabled={disabled} onClick={disabled ? undefined : onClick} style={{ ...base, ...variants[variant], ...s }}
       onMouseDown={e => !disabled && (e.currentTarget.style.transform = 'scale(0.96)')}
       onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
       onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
@@ -232,51 +184,26 @@ export function Stat({ value, label, color }) {
   );
 }
 
-export function PasscodeGate({ open, onClose, onConfirm, message = 'Enter passcode to continue' }) {
-  const [pw, setPw] = useState('');
-  const [err, setErr] = useState(false);
-  const MAX = 4;
-  const close = () => { onClose(); setPw(''); setErr(false); };
-  const press = (d) => {
-    if (err) { setPw(String(d)); setErr(false); return; }
-    if (pw.length >= MAX) return;
-    const next = pw + d;
-    setPw(next);
-    if (next.length === MAX) {
-      if (next === '1416') { setTimeout(() => { onConfirm(); close(); }, 120); }
-      else { setTimeout(() => { setErr(true); setPw(''); }, 120); }
-    }
-  };
-  const del = () => { setErr(false); setPw(p => p.slice(0, -1)); };
-  const KEYS = [1,2,3,4,5,6,7,8,9,null,0,'⌫'];
-  return (
-    <Sheet open={open} onClose={close} title="Enter passcode">
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <p style={{ margin: '0 0 20px', color: err ? 'oklch(0.58 0.18 25)' : 'var(--muted)', fontSize: 14, fontWeight: 600, transition: 'color .2s' }}>
-          {err ? 'Wrong passcode' : message}
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-          {Array.from({ length: MAX }).map((_, i) => (
-            <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: pw.length > i ? (err ? 'oklch(0.58 0.18 25)' : 'var(--ink)') : 'var(--line)', transition: 'background .15s' }} />
-          ))}
-        </div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 280, margin: '0 auto 16px' }}>
-        {KEYS.map((k, i) => {
-          if (k === null) return <div key={i} />;
-          const isBack = k === '⌫';
-          return (
-            <button key={i} onClick={() => isBack ? del() : press(k)} style={{ height: 68, borderRadius: 22, border: 'none', cursor: 'pointer', fontFamily: isBack ? 'inherit' : 'var(--display)', fontSize: isBack ? 22 : 26, fontWeight: 600, background: isBack ? 'transparent' : 'var(--sunken)', color: isBack ? 'var(--muted)' : 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .1s, transform .08s', boxShadow: isBack ? 'none' : 'var(--card-shadow)' }}
-              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.93)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.93)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-            >{k}</button>
-          );
-        })}
-      </div>
-      <Btn variant="ghost" onClick={close} style={{ width: '100%' }}>Cancel</Btn>
-    </Sheet>
-  );
-}
-
 export function ConfirmDelete({ open, onClose, onConfirm }) {
-  return <PasscodeGate open={open} onClose={onClose} onConfirm={onConfirm} message="Enter passcode to delete" />;
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const confirm = async () => {
+    if (busy) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      if (await onConfirm() !== false) onClose();
+      else setFailed(true);
+    } catch { setFailed(true); }
+    finally { setBusy(false); }
+  };
+  const close = () => { if (!busy) { setFailed(false); onClose(); } };
+  return <Sheet open={open} onClose={close} title="Delete this record?">
+    <p style={{ color: 'var(--muted)' }}>This removes the selected record. It cannot be undone from the app.</p>
+    {failed && <p role="alert">Could not confirm deletion. Check the latest records before trying again.</p>}
+    <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 20 }}>
+      <Btn variant="ghost" disabled={busy} onClick={close}>Cancel</Btn>
+      <Btn variant="danger" disabled={busy} onClick={confirm}>{busy ? 'Deleting…' : 'Delete record'}</Btn>
+    </div>
+  </Sheet>;
 }

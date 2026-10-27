@@ -1,7 +1,8 @@
+import { todayIso } from './dates.js';
 import { useState, useEffect, useRef } from 'react';
 import {
-  fmtDate, fmtDateShort, surnameOf, initials,
-  hostStats, overdueHost, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, bonusHostedDates,
+  fmtDate, fmtDateShort, initials,
+  hostStats, fetchStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, bonusHostedDates,
 } from './store.js';
 import { Avatar, AvatarStack, Icon, Sheet, Btn, Card, Segment, Stat, ConfirmDelete } from './ui.jsx';
 
@@ -81,7 +82,6 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
 
 export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme }) {
   const { people, weeks, fetches } = store;
-  const stats = hostStats(people, weeks);
   const lf = lastFetcher(fetches, store.personById);
   const rotation = rotationOrder(people, weeks);
   const lastWeek = weeks[0];
@@ -394,7 +394,7 @@ export function DateField({ value, onChange, autoOpen = false }) {
       const t = setTimeout(() => setMounted(false), 200);
       return () => clearTimeout(t);
     }
-  }, [open]);
+  }, [open, value]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -479,7 +479,7 @@ export function DateField({ value, onChange, autoOpen = false }) {
 // ── WeekEditor ────────────────────────────────────────────
 export function WeekEditor({ store, editing, draft, open, onClose }) {
   const isNew = !editing || !editing.id;
-  const seed = editing || draft || { date: new Date().toISOString().slice(0,10), hostId: null, attendees: [] };
+  const seed = editing || draft || { date: todayIso(), hostId: null, attendees: [] };
   const [date, setDate] = useState(seed.date);
   const [hostId, setHostId] = useState(seed.hostId);
   const [att, setAtt] = useState(() => new Set(seed.attendees || []));
@@ -488,25 +488,30 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
 
   useEffect(() => {
     if (open) {
-      const s = editing || draft || { date: new Date().toISOString().slice(0,10), hostId: null, attendees: [] };
+      const s = editing || draft || { date: todayIso(), hostId: null, attendees: [] };
       setDate(s.date); setHostId(s.hostId); setAtt(new Set(s.attendees || []));
       setNote(s.note || '');
     }
   }, [open, editing, draft]);
 
-  const toggleAtt = (id) => setAtt(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const toggleAtt = (id) => setAtt(prev => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s; });
   const pickHost = (id) => { setHostId(id); setAtt(prev => new Set(prev).add(id)); };
 
-  const save = () => {
+  const save = async () => {
+    if (store.saving) return;
     const payload = { date, hostId, attendees: [...att], note: note.trim() };
-    if (editing && editing.id) store.updateWeek(editing.id, payload);
-    else store.addWeek(payload);
-    onClose();
+    const saved = editing?.id ? await store.updateWeek(editing.id, payload) : await store.addWeek(payload);
+    if (saved) onClose();
   };
-  const del = () => { if (editing && editing.id) store.deleteWeek(editing.id); onClose(); };
+  const del = async () => {
+    const deleted = editing?.id && await store.deleteWeek(editing.id);
+    if (deleted) onClose();
+    return deleted;
+  };
 
   return (
-    <Sheet open={open} onClose={onClose} title={isNew ? 'Log a night' : 'Edit night'}>
+    <Sheet open={open} onClose={store.saving ? undefined : onClose} title={isNew ? 'Log a night' : 'Edit night'}>
+      <fieldset disabled={store.saving} className="editor-fields">
       <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Date</label>
       <DateField value={date} onChange={setDate} />
 
@@ -554,8 +559,9 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
         {!isNew && <Btn variant="danger" icon="trash" onClick={() => setConfirmDelete(true)}>Delete</Btn>}
         <div style={{ flex: 1 }} />
         <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
-        <Btn icon="check" onClick={save}>Save</Btn>
+        <Btn icon="check" disabled={store.saving} onClick={save}>{store.saving ? 'Saving…' : 'Save'}</Btn>
       </div>
+      </fieldset>
       <ConfirmDelete open={confirmDelete} onClose={() => setConfirmDelete(false)} onConfirm={del} />
     </Sheet>
   );
@@ -565,6 +571,7 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
 export function PeopleManager({ store, open, onClose }) {
   return (
     <Sheet open={open} onClose={onClose} title="Members">
+      <p style={{ color: 'var(--muted)' }}>Use Away in a member’s profile to pause their hosting turn. Their gathering and game history stays intact.</p>
       <div>
         {store.people.map((p, i) => (
           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 2px',
@@ -618,7 +625,7 @@ export function ProfileSheet({ store, person: personProp, open, onClose, openEdi
         <MiniStat value={ai.streak} label="Streak" />
         <MiniStat value={fetched} label="Fetched" color="oklch(0.66 0.13 295)" />
       </div>
-      <button onClick={() => store.toggleAway(person.id)} style={{
+      <button disabled={store.saving} onClick={() => store.toggleAway(person.id)} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           border: 'none', background: isAway ? 'var(--accent-soft)' : 'var(--sunken)',
           borderRadius: 16, padding: '14px 16px', cursor: 'pointer', marginBottom: 18,
@@ -688,7 +695,7 @@ export function ShareSheet({ store, open, onClose }) {
   ].filter(Boolean);
   const text = lines.join('\n');
   const copy = () => {
-    try { navigator.clipboard.writeText(text); } catch (e) {}
+    try { navigator.clipboard.writeText(text); } catch {}
     setCopied(true);
   };
   return (

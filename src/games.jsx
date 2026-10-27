@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
-import { surnameOf, fmtDateShort, fmtDate, matchSides, gameStats, recentGames, playerGameRecord, playerMatches, rivalryStats } from './store.js';
-import { Avatar, Icon, Sheet, Btn, Card, Segment, ConfirmDelete, PasscodeGate } from './ui.jsx';
+import { entryFromGame, toggleParticipant, buildMatchResult } from './match-entry.js';
+import { todayIso } from './dates.js';
+import { useState, useEffect, useEffectEvent } from 'react';
+import { fmtDateShort, fmtDate, matchSides, gameStats, recentGames, playerGameRecord, playerMatches, rivalryStats } from './store.js';
+import { Avatar, Icon, Sheet, Btn, Card, Segment, ConfirmDelete } from './ui.jsx';
 import { SectionTitle, PageHead, DateField } from './screens.jsx';
 
-const BOARD_TITLES = ['Baloot', 'Codenames', 'Catan', 'Carrom', 'Dominoes', 'Monopoly', 'Uno', 'Risk'];
 const TEAM_B_COLOR = 'oklch(0.62 0.13 245)';
 const teamColor = (t) => (t === 'A' ? 'var(--accent)' : TEAM_B_COLOR);
-const strip = (name) => surnameOf(name);
-const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const TODAY_ISO = (() => { const d = new Date(); if (d.getHours() < 7) d.setDate(d.getDate() - 1); return isoOf(d); })();
-const byDateDesc = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+
+const Lbl = ({ children, top }) => (
+  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--muted)', margin: top ? '0 0 8px' : '20px 0 8px' }}>{children}</div>
+);
 
 function TeamMark({ person, size = 44, ring, badge, crown, dim, onClick }) {
   const C = onClick ? 'button' : 'div';
@@ -34,403 +35,84 @@ function TeamMark({ person, size = 44, ring, badge, crown, dim, onClick }) {
   );
 }
 
-function Stepper({ value, onChange }) {
-  const btn = (name, fn, disabled) => (
-    <button type="button" onClick={disabled ? undefined : fn} style={{
-      width: 34, height: 34, borderRadius: 11, border: 'none', cursor: disabled ? 'default' : 'pointer',
-      background: 'var(--sunken)', color: disabled ? 'var(--faint)' : 'var(--ink)', opacity: disabled ? 0.5 : 1,
-      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name={name} size={17} sw={2.6} />
-    </button>
-  );
+function ResultPlayers({ people, selected, side, onToggle }) {
+  const winners = side === 'winners';
+  const color = winners ? 'var(--accent)' : TEAM_B_COLOR;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-      {btn('minus', () => onChange(Math.max(0, value - 1)), value <= 0)}
-      <div style={{ minWidth: 22, textAlign: 'center', fontFamily: 'var(--display)', fontSize: 23, fontWeight: 700, color: 'var(--ink)' }}>{value}</div>
-      {btn('plus', () => onChange(value + 1))}
-    </div>
-  );
-}
-
-function TeamPicker({ people, assign, activeTeam, onAssign }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 11 }}>
-      {people.map(p => {
-        const t = assign[p.id];
-        return (
-          <button key={p.id} type="button" onClick={() => onAssign(p.id)} style={{
-            border: 'none', background: 'none', cursor: 'pointer', padding: 0,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-            <TeamMark person={p} size={44} ring={t ? teamColor(t) : null} badge={t} dim={!t} />
-            <span style={{ fontSize: 10, fontWeight: t ? 700 : 500, color: t ? 'var(--ink)' : 'var(--faint)',
-              maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-          </button>
-        );
+    <div role="group" aria-label={winners ? 'Winning players' : 'Losing players'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(62px, 1fr))', gap: 12 }}>
+      {people.map(person => {
+        const on = selected.includes(person.id);
+        return <button key={person.id} type="button" aria-pressed={on} aria-label={`${person.name}: ${winners ? 'winner' : 'loser'}`} onClick={() => onToggle(side, person.id)} style={{
+          border: 'none', background: 'none', padding: '5px 2px', minHeight: 70,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, cursor: 'pointer',
+        }}>
+          <TeamMark person={person} size={44} ring={on ? color : null} crown={on && winners} dim={!on} />
+          <span style={{ fontSize: 11, fontWeight: on ? 700 : 500, color: on ? 'var(--ink)' : 'var(--muted)', overflowWrap: 'anywhere' }}>{person.name}</span>
+        </button>;
       })}
     </div>
   );
 }
 
-function CrownPicker({ people, selected, winner, onToggle, onCrown }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 13 }}>
-      {people.map(p => {
-        const on = selected.includes(p.id);
-        const isWin = winner === p.id;
-        return (
-          <div key={p.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <div style={{ position: 'relative' }}>
-              <button type="button" onClick={() => onToggle(p.id)} style={{
-                border: 'none', background: 'none', padding: 0, cursor: 'pointer', lineHeight: 0 }}>
-                <TeamMark person={p} size={52} ring={on ? 'var(--accent)' : null} dim={!on} />
-              </button>
-              {on && (
-                <button type="button" aria-label="Mark winner" onClick={(e) => { e.stopPropagation(); onCrown(p.id); }} style={{
-                  position: 'absolute', right: -6, top: -8, width: 26, height: 26, borderRadius: '50%', cursor: 'pointer', padding: 0,
-                  border: '2.5px solid var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isWin ? 'var(--accent)' : 'var(--sunken)', transition: 'all .15s',
-                  boxShadow: isWin ? '0 2px 7px rgba(0,0,0,0.2)' : 'none' }}>
-                  <Icon name="crown" size={14} sw={2.2} color={isWin ? 'var(--accent-ink)' : 'var(--faint)'} fill={isWin} />
-                </button>
-              )}
-            </div>
-            <span style={{ fontSize: 10.5, fontWeight: on ? 700 : 500, color: on ? 'var(--ink)' : 'var(--faint)',
-              maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function Chip({ active, onClick, children }) {
-  return (
-    <button type="button" onClick={onClick} style={{
-      border: 'none', cursor: 'pointer', borderRadius: 99, padding: '7px 13px', fontFamily: 'inherit',
-      fontSize: 13, fontWeight: 600, transition: 'all .15s',
-      background: active ? 'var(--accent)' : 'var(--sunken)', color: active ? 'var(--accent-ink)' : 'var(--muted)' }}>{children}</button>
-  );
-}
-
-function SameCrewChip({ onClick, label, style: s = {} }) {
-  return (
-    <button type="button" onClick={onClick} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer', borderRadius: 99,
-      padding: '8px 14px', border: '1.5px dashed var(--accent)', background: 'var(--accent-soft)',
-      color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, ...s }}>
-      <Icon name="history" size={15} sw={2.2} /> {label}
-    </button>
-  );
-}
-
-function QuickDate({ value, onChange }) {
-  const [showCal, setShowCal] = useState(false);
-  const customActive = value !== TODAY_ISO;
-  const pill = (label, active, onClick) => (
-    <button type="button" onClick={onClick} style={{
-      flex: 1, border: 'none', cursor: 'pointer', borderRadius: 12, padding: '11px 8px', fontFamily: 'inherit',
-      fontSize: 14, fontWeight: 700, transition: 'all .15s', whiteSpace: 'nowrap',
-      background: active ? 'var(--accent)' : 'var(--sunken)', color: active ? 'var(--accent-ink)' : 'var(--muted)' }}>{label}</button>
-  );
-  return (
-    <div style={{ marginBottom: showCal ? 0 : 22 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        {pill('Today', !customActive, () => { onChange(TODAY_ISO); setShowCal(false); })}
-        {pill(customActive ? fmtDateShort(value) : 'Pick a date', customActive, () => setShowCal(true))}
-      </div>
-      {showCal && <div style={{ marginTop: 10 }}><DateField value={value} onChange={(d) => { onChange(d); setShowCal(false); }} autoOpen /></div>}
-    </div>
-  );
-}
-
-const Lbl = ({ children, top }) => (
-  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--muted)', margin: top ? '0 0 8px' : '20px 0 8px' }}>{children}</div>
-);
-
-function TeamTag({ t, count, active, onClick }) {
-  const c = teamColor(t);
-  return (
-    <button type="button" onClick={onClick} style={{
-      flex: 1, display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', borderRadius: 14, padding: '10px 13px',
-      fontFamily: 'inherit', transition: 'all .15s',
-      border: active ? `2px solid ${c}` : '2px solid var(--line)',
-      background: active ? `color-mix(in oklch, ${t === 'A' ? 'var(--accent)' : TEAM_B_COLOR} 13%, var(--surface))` : 'var(--surface)' }}>
-      <span style={{ width: 24, height: 24, borderRadius: 8, background: c, color: '#fff', fontFamily: 'var(--display)',
-        fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t}</span>
-      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>Team {t}</span>
-      <span style={{ fontSize: 13, color: 'var(--muted)', marginLeft: 'auto' }}>{count}</span>
-      {active && <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.4, textTransform: 'uppercase', color: c }}>· filling</span>}
-    </button>
-  );
-}
-
-const TITLES_KEY = 'fr_game_titles';
-function loadSavedTitles() {
-  try { return JSON.parse(localStorage.getItem(TITLES_KEY) || '[]'); } catch { return []; }
-}
-function saveTitle(t) {
-  if (!t) return;
-  const existing = loadSavedTitles();
-  if (!existing.includes(t)) localStorage.setItem(TITLES_KEY, JSON.stringify([t, ...existing].slice(0, 20)));
-}
-
-function MatchEditor({ store, open, onClose, initialCat, editing }) {
-  const { people } = store;
-  const [cat, setCat] = useState(initialCat || 'board');
-  const [date, setDate] = useState(TODAY_ISO);
-  const [title, setTitle] = useState('');
-  const [savedTitles, setSavedTitles] = useState([]);
-  const [assign, setAssign] = useState({});
-  const [activeTeam, setActiveTeam] = useState('A');
-  const [teamWinner, setTeamWinner] = useState(null);
-  const [soloWinner, setSoloWinner] = useState(null);
-  const [soloScore, setSoloScore] = useState({ w: 0, l: 0 });
-  const [score, setScore] = useState({ A: 0, B: 0 });
-
+export function MatchEditor({ store, open, onClose, initialCat, editing }) {
+  const [cat, setCat] = useState(editing?.cat || initialCat || 'board');
+  const [date, setDate] = useState(editing?.date || todayIso());
+  const [title, setTitle] = useState(editing?.title || '');
+  const [entry, setEntry] = useState(() => entryFromGame(editing));
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [teamsFromNight, setTeamsFromNight] = useState(false);
+  const prepareEditor = useEffectEvent(() => {
+    setCat(editing?.cat || initialCat || 'board');
+    setDate(editing?.date || todayIso());
+    setTitle(editing?.title || '');
+    setEntry(entryFromGame(editing));
+    setDetailsOpen(false);
+    setConfirmOpen(false);
+  });
+  useEffect(() => { if (open) prepareEditor(); }, [open]);
 
-  const reset = () => {
-    setTitle(''); setDate(TODAY_ISO);
-    setAssign({}); setActiveTeam('A'); setTeamWinner(null); setSoloWinner(null); setSoloScore({ w: 0, l: 0 }); setScore({ A: 0, B: 0 });
-    setTeamsFromNight(false);
+  // Preserve participants from older results even if they are no longer in the roster.
+  const missingIds = [...entry.winners, ...entry.losers].filter(id => !store.people.some(person => person.id === id));
+  const people = [...store.people, ...missingIds.map(id => ({ id, name: 'Former member', color: 'var(--muted)' }))];
+  const result = buildMatchResult({ cat, date, title, ...entry }, editing);
+  const toggle = (side, id) => setEntry(current => toggleParticipant(current, side, id));
+  const save = async () => {
+    if (!result || store.saving) return;
+    const saved = editing ? await store.updateGame(editing.id, result) : await store.addGame(result);
+    if (saved) onClose();
   };
-  useEffect(() => {
-    if (!open) return;
-    setSavedTitles(loadSavedTitles());
-    if (editing) {
-      setCat(editing.cat);
-      setDate(editing.date);
-      setTitle(editing.cat === 'fifa' ? '' : editing.title);
-      if (editing.format === 'teams') {
-        const a = {}; (editing.teamA || []).forEach(id => a[id] = 'A'); (editing.teamB || []).forEach(id => a[id] = 'B');
-        setAssign(a); setActiveTeam('A'); setTeamWinner(editing.winner);
-        if (editing.cat === 'fifa' && editing.score) setScore({ A: editing.score[0], B: editing.score[1] });
-      } else {
-        const a = {}; (editing.players || []).forEach(id => a[id] = 'A');
-        setAssign(a); setActiveTeam('A'); setSoloWinner(editing.winnerId);
-        if (editing.score) setSoloScore({ w: editing.score[0], l: editing.score[1] });
-      }
-    } else {
-      setCat(initialCat || 'board'); reset();
-      // pre-fill teams from most recent game tonight
-      const tonight = store.games.filter(g => g.date === TODAY_ISO && g.format === 'teams');
-      if (tonight.length > 0) {
-        const last = tonight[0];
-        const a = {}; (last.teamA || []).forEach(id => a[id] = 'A'); (last.teamB || []).forEach(id => a[id] = 'B');
-        setAssign(a); setActiveTeam('A'); setTeamsFromNight(true);
-      }
-    }
-  }, [open]);
-
-  const pById = (id) => people.find(p => p.id === id);
-  const teamA = Object.keys(assign).filter(id => assign[id] === 'A');
-  const teamB = Object.keys(assign).filter(id => assign[id] === 'B');
-
-  // solo = players assigned to only one side
-  const isSolo = (teamA.length >= 1) !== (teamB.length >= 1);
-  const soloPlayers = isSolo ? (teamA.length ? teamA : teamB) : [];
-
-  const assignToTeam = (id) => {
-    setTeamWinner(null); setSoloWinner(null);
-    setAssign(a => {
-      const copy = { ...a };
-      if (copy[id] === activeTeam) delete copy[id];
-      else copy[id] = activeTeam;
-      return copy;
-    });
-  };
-
-  const fifaScoreWinner = score.A === score.B ? null : (score.A > score.B ? 'A' : 'B');
-
-  const soloFifaValid = soloWinner !== null && soloScore.w !== soloScore.l;
-  const canSave = isSolo
-    ? (soloPlayers.length >= 1 && soloWinner !== null && (cat === 'fifa' ? soloFifaValid : true))
-    : (teamA.length >= 1 && teamB.length >= 1 && (cat === 'fifa' ? fifaScoreWinner : teamWinner));
-
-  const save = () => {
-    if (!canSave) return;
-    const t = cat === 'fifa' ? 'FIFA' : (title.trim() || 'Game night');
-    if (cat !== 'fifa' && title.trim()) saveTitle(title.trim());
-    let gameData;
-    if (isSolo) {
-      const extras = cat === 'fifa' ? { score: [soloScore.w, soloScore.l] } : {};
-      gameData = { cat, format: 'ffa', date, title: t, players: soloPlayers, winnerId: soloWinner, ...extras };
-    } else if (cat === 'fifa') {
-      gameData = { cat: 'fifa', format: 'teams', date, title: t, teamA, teamB, winner: fifaScoreWinner, score: [score.A, score.B] };
-    } else {
-      gameData = { cat: 'board', format: 'teams', date, title: t, teamA, teamB, winner: teamWinner };
-    }
-    if (editing) store.updateGame(editing.id, gameData);
-    else store.addGame(gameData);
-    onClose();
-  };
-
-  const switchCat = () => { setCat(nc => nc === 'fifa' ? 'board' : 'fifa'); setTeamWinner(null); setSoloWinner(null); setSoloScore({ w: 0, l: 0 }); setScore({ A: 0, B: 0 }); setTitle(''); };
-  const suggestions = savedTitles.filter(t => t.toLowerCase().includes(title.toLowerCase()) && t !== title);
 
   return (
-    <Sheet open={open} onClose={onClose} title={editing ? 'Edit match' : `Log a ${cat === 'fifa' ? 'FIFA' : 'board'} match`}>
-      {/* category switch */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6, marginBottom: 14 }}>
-        <button type="button" onClick={switchCat} style={{ border: 'none', background: 'none', cursor: 'pointer',
-          color: 'var(--accent)', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
-          <Icon name="shuffle" size={15} sw={2.2} /> {cat === 'fifa' ? 'Log a board game instead' : 'Log FIFA instead'}
-        </button>
-      </div>
-
-      {/* game name input — board only */}
-      {cat === 'board' && (
-        <div style={{ marginBottom: 18, position: 'relative' }}>
-          <input
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Game name (e.g. Baloot, Catan…)"
-            style={{ width: '100%', boxSizing: 'border-box', padding: '13px 14px', borderRadius: 13,
-              border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)',
-              fontFamily: 'inherit', fontSize: 15.5, outline: 'none' }}
-            onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-            onBlur={e => e.target.style.borderColor = 'var(--line)'}
-          />
-          {suggestions.length > 0 && title.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-              {suggestions.slice(0, 6).map(s => (
-                <button key={s} type="button" onClick={() => setTitle(s)} style={{
-                  border: 'none', cursor: 'pointer', borderRadius: 99, padding: '5px 12px',
-                  fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
-                  background: 'var(--sunken)', color: 'var(--muted)' }}>{s}</button>
-              ))}
-            </div>
-          )}
+    <Sheet open={open} onClose={store.saving ? undefined : onClose} title={editing ? 'Edit match' : 'Log a match'}>
+      <fieldset disabled={store.saving} className="editor-fields">
+        <Segment value={cat} options={[{ value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Board Game' }]} onChange={setCat} />
+        <div style={{ margin: '22px 0 12px' }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 19, fontWeight: 700, color: 'var(--ink)' }}>Who won? <span style={{ color: 'var(--accent)', fontSize: 14 }}>{entry.winners.length || ''}</span></div>
+          <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 3 }}>Choose one or more players.</div>
         </div>
-      )}
-
-      {/* team tags — A active by default */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: teamsFromNight ? 8 : 14, alignItems: 'center' }}>
-        <TeamTag t="A" count={teamA.length} active={activeTeam === 'A'} onClick={() => setActiveTeam('A')} />
-        <TeamTag t="B" count={teamB.length} active={activeTeam === 'B'} onClick={() => setActiveTeam('B')} />
-      </div>
-      {teamsFromNight && !editing && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '7px 11px', borderRadius: 12, background: 'var(--accent-soft)' }}>
-          <span style={{ fontSize: 12.5, color: 'var(--accent)', fontWeight: 600 }}>Same teams as tonight</span>
-          <button type="button" onClick={() => { setAssign({}); setTeamsFromNight(false); }} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--accent)', padding: '2px 6px' }}>Clear</button>
+        <ResultPlayers people={people.filter(person => !entry.losers.includes(person.id))} selected={entry.winners} side="winners" onToggle={toggle} />
+        <div style={{ margin: '20px 0 12px' }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 19, fontWeight: 700, color: 'var(--ink)' }}>Who lost? <span style={{ color: TEAM_B_COLOR, fontSize: 14 }}>{entry.losers.length || ''}</span></div>
+          <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 3 }}>Choose one or more players.</div>
         </div>
-      )}
-
-      {/* player grid */}
-      <TeamPicker people={people} assign={assign} activeTeam={activeTeam} onAssign={assignToTeam} />
-
-      {/* outcome — solo mode */}
-      {isSolo && soloPlayers.length >= 1 && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>Who won?</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            {soloPlayers.map(id => {
-              const p = pById(id);
-              const won = soloWinner === id;
-              return (
-                <button key={id} type="button" onClick={() => setSoloWinner(won ? null : id)} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                  border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}>
-                  <div style={{ borderRadius: '50%', boxShadow: won ? `0 0 0 3px var(--surface), 0 0 0 5.5px var(--accent)` : 'none', transition: 'box-shadow .15s' }}>
-                    <Avatar person={p} size={48} dim={soloWinner !== null && !won} />
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: won ? 700 : 500, color: won ? 'var(--accent)' : 'var(--faint)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                    {won && <Icon name="crown" size={11} sw={2.2} color="var(--accent)" fill />}
-                    {p?.name || ''}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {cat === 'fifa' && soloWinner && (
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
-              background: 'var(--sunken)', borderRadius: 18, padding: '16px 20px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent)' }}>
-                  {pById(soloWinner)?.name || ''}
-                </span>
-                <Stepper value={soloScore.w} onChange={v => setSoloScore(s => ({ ...s, w: v }))} />
-              </div>
-              <div style={{ fontFamily: 'var(--display)', fontSize: 18, fontWeight: 700, color: 'var(--faint)' }}>vs</div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--faint)' }}>Others</span>
-                <Stepper value={soloScore.l} onChange={v => setSoloScore(s => ({ ...s, l: v }))} />
-              </div>
-            </div>
-          )}
-          {cat === 'fifa' && soloWinner && soloScore.w === soloScore.l && (
-            <div style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--faint)', marginTop: 8 }}>No draws — someone has to lose.</div>
-          )}
+        <ResultPlayers people={people.filter(person => !entry.winners.includes(person.id))} selected={entry.losers} side="losers" onToggle={toggle} />
+        <div style={{ margin: '16px 0' }}>
+          <button type="button" aria-expanded={detailsOpen} onClick={() => setDetailsOpen(value => !value)} style={{ border: 'none', background: 'none', color: 'var(--muted)', fontSize: 12, padding: '10px 0', cursor: 'pointer' }}>
+            {detailsOpen ? 'Hide details' : `${fmtDateShort(date)} · ${cat === 'board' ? 'Game name or date' : 'Change date'}`}
+          </button>
+          {detailsOpen && <div style={{ display: 'grid', gap: 14, marginBottom: 12 }}>
+            {cat === 'board' && <label style={{ color: 'var(--muted)', fontSize: 12 }}>Game name · optional
+              <input value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Baloot" style={{ display: 'block', width: '100%', marginTop: 6, padding: 12, borderRadius: 13, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 16 }} />
+            </label>}
+            <DateField value={date} onChange={setDate} />
+          </div>}
         </div>
-      )}
-
-      {/* outcome — teams mode */}
-      {!isSolo && teamA.length >= 1 && teamB.length >= 1 && (
-        <div style={{ marginTop: 20 }}>
-          {cat === 'fifa' ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: 8,
-                background: 'var(--sunken)', borderRadius: 18, padding: '16px 12px' }}>
-                {['A', 'B'].map((side, i) => {
-                  const ids = side === 'A' ? teamA : teamB;
-                  const winning = fifaScoreWinner === side;
-                  return (
-                    <div key={side} style={{ display: 'contents' }}>
-                      {i === 1 && <div style={{ fontFamily: 'var(--display)', fontSize: 15, fontWeight: 700, color: 'var(--faint)' }}>vs</div>}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-                        opacity: fifaScoreWinner && !winning ? 0.5 : 1, transition: 'opacity .15s' }}>
-                        <div style={{ display: 'flex' }}>
-                          {ids.map((id, j) => <span key={id} style={{ marginLeft: j === 0 ? 0 : -10 }}><TeamMark person={pById(id)} size={34} ring={teamColor(side)} /></span>)}
-                        </div>
-                        <span style={{ fontSize: 11.5, fontWeight: 800, color: teamColor(side), fontFamily: 'var(--display)' }}>Team {side}</span>
-                        <Stepper value={score[side]} onChange={v => setScore(s => ({ ...s, [side]: v }))} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {score.A === score.B && <div style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--faint)', marginTop: 8 }}>No draws — someone has to lose.</div>}
-            </>
-          ) : (
-            <div style={{ display: 'flex', gap: 10 }}>
-              {['A', 'B'].map(side => {
-                const won = teamWinner === side;
-                const ids = side === 'A' ? teamA : teamB;
-                return (
-                  <button key={side} type="button" onClick={() => setTeamWinner(side)} style={{
-                    flex: 1, display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', borderRadius: 15, padding: '11px 13px',
-                    border: won ? `2px solid ${teamColor(side)}` : '2px solid var(--line)',
-                    background: won ? `color-mix(in oklch, ${side === 'A' ? 'var(--accent)' : TEAM_B_COLOR} 14%, var(--surface))` : 'var(--surface)',
-                    fontFamily: 'inherit', transition: 'all .15s' }}>
-                    <div style={{ display: 'flex' }}>
-                      {ids.slice(0, 3).map((id, j) => <span key={id} style={{ marginLeft: j === 0 ? 0 : -9 }}><Avatar person={pById(id)} size={26} /></span>)}
-                    </div>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: teamColor(side), fontFamily: 'var(--display)' }}>Team {side}</span>
-                    {won && <Icon name="crown" size={15} sw={2.2} color={teamColor(side)} />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ marginTop: 20, marginBottom: 4 }}>
-        <QuickDate value={date} onChange={setDate} />
-      </div>
-
-      <Btn variant="primary" size="lg" icon="check" disabled={!canSave} onClick={save} style={{ width: '100%', marginTop: 4 }}>
-        Save result
-      </Btn>
-      {editing && (
-        <>
-          <ConfirmDelete open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={() => { store.deleteGame(editing.id); onClose(); }} />
-          <Btn variant="quiet" size="sm" icon="trash" onClick={() => setConfirmOpen(true)} style={{ width: '100%', marginTop: 10, color: 'oklch(0.58 0.18 25)' }}>
-            Delete this match
-          </Btn>
-        </>
-      )}
+        <Btn icon="check" size="lg" disabled={!result || store.saving} onClick={save} style={{ width: '100%' }}>{store.saving ? 'Saving…' : 'Save result'}</Btn>
+      </fieldset>
+      {editing && <>
+        <ConfirmDelete open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={async () => { const deleted = await store.deleteGame(editing.id); if (deleted) onClose(); return deleted; }} />
+        <Btn variant="danger" disabled={store.saving} size="sm" icon="trash" onClick={() => setConfirmOpen(true)} style={{ width: '100%', marginTop: 10 }}>Delete this match</Btn>
+      </>}
     </Sheet>
   );
 }
@@ -465,7 +147,7 @@ function Podium({ entries, onPlayer }) {
           const displayRank = [2, 1, 3][slotIdx];
           const m = PODIUM_META[displayRank];
           if (!group) return <div key={displayRank} style={{ flex: 1 }} />;
-          const isActualRank = group.rank === displayRank || (displayRank === 1 && group.rank === 1);
+
           return (
             <div key={displayRank} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
               <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -768,7 +450,7 @@ function DayGroups({ store, games, onPlayer, onSelect }) {
   );
 }
 
-function RivalryBar({ wins, total, idA, idB }) {
+function RivalryBar({ wins, total, idA }) {
   const pct = total === 0 ? 50 : Math.round((wins[idA] || 0) / total * 100);
   return (
     <div style={{ height: 6, borderRadius: 99, background: 'var(--line)', overflow: 'hidden', margin: '8px 0' }}>
@@ -803,7 +485,7 @@ function RivalriesSection({ store, cat }) {
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{a.name}</span>
               <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--display)' }}>{wA}</span>
             </div>
-            <RivalryBar wins={r.wins} total={r.total} idA={a.id} idB={b.id} />
+            <RivalryBar wins={r.wins} total={r.total} idA={a.id} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{b.name}</span>
               <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--muted)', fontFamily: 'var(--display)' }}>{wB}</span>
@@ -864,116 +546,6 @@ function RivalriesSection({ store, cat }) {
   );
 }
 
-function StatTile({ label, value, sub }) {
-  return (
-    <div style={{ background: 'var(--sunken)', borderRadius: 16, padding: '14px 16px' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 800, color: 'var(--ink)', lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{sub}</div>}
-    </div>
-  );
-}
-
-function GamesStatsTab({ store, onPlayer }) {
-  const { people, games } = store;
-  const allGames = games || [];
-
-  const boardGames = allGames.filter(g => g.cat === 'board');
-  const fifaGames  = allGames.filter(g => g.cat === 'fifa');
-
-  // most played board game title
-  const titleCount = {};
-  boardGames.forEach(g => { if (g.title) titleCount[g.title] = (titleCount[g.title] || 0) + 1; });
-  const topTitle = Object.entries(titleCount).sort((a, b) => b[1] - a[1])[0];
-
-  // most wins overall
-  const wins = {};
-  allGames.forEach(g => {
-    const { winners } = matchSides(g);
-    winners.forEach(id => { wins[id] = (wins[id] || 0) + 1; });
-  });
-  const topWinner = people.map(p => ({ p, w: wins[p.id] || 0 })).sort((a, b) => b.w - a.w)[0];
-
-  // most games played
-  const played = {};
-  allGames.forEach(g => matchSides(g).players.forEach(id => { played[id] = (played[id] || 0) + 1; }));
-  const topPlayed = people.map(p => ({ p, n: played[p.id] || 0 })).sort((a, b) => b.n - a.n)[0];
-
-  // biggest rivalry
-  const tagged = allGames.map(g => ({ ...g, cat: 'all' }));
-  const biggestRivalry = rivalryStats(tagged, 'all')[0];
-
-  // most one-sided
-  const oneSided = [...rivalryStats(tagged, 'all')]
-    .filter(r => r.total >= 3)
-    .sort((a, b) => {
-      const diffA = Math.abs((Object.values(a.wins)[0] || 0) - (Object.values(a.wins)[1] || 0));
-      const diffB = Math.abs((Object.values(b.wins)[0] || 0) - (Object.values(b.wins)[1] || 0));
-      return diffB - diffA;
-    })[0];
-
-  const pById = store.personById;
-
-  return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-        <StatTile label="Total games" value={allGames.length} sub={`${boardGames.length} board · ${fifaGames.length} FIFA`} />
-        <StatTile label="Top winner" value={topWinner?.p ? surnameOf(topWinner.p.name) : '—'} sub={topWinner?.w ? `${topWinner.w} wins` : ''} />
-        <StatTile label="Most active" value={topPlayed?.p ? surnameOf(topPlayed.p.name) : '—'} sub={topPlayed?.n ? `${topPlayed.n} games` : ''} />
-        <StatTile label="Fav game" value={topTitle ? topTitle[0] : '—'} sub={topTitle ? `played ${topTitle[1]}×` : 'No board games yet'} />
-      </div>
-
-      {biggestRivalry && (() => {
-        const [a, b] = biggestRivalry.ids.map(pById).filter(Boolean);
-        if (!a || !b) return null;
-        const wA = biggestRivalry.wins[a.id] || 0, wB = biggestRivalry.wins[b.id] || 0;
-        return (
-          <Card pad={14} style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 10 }}>Biggest rivalry</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button type="button" onClick={() => onPlayer(a)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={a} size={40} /></button>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 6 }}>
-                  <span>{a.name}</span><span>{b.name}</span>
-                </div>
-                <div style={{ height: 7, borderRadius: 99, background: 'var(--line)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.round(wA / biggestRivalry.total * 100)}%`, background: 'var(--accent)', borderRadius: 99 }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginTop: 5 }}>
-                  <span>{wA} wins</span><span style={{ color: 'var(--faint)' }}>{biggestRivalry.total} games</span><span>{wB} wins</span>
-                </div>
-              </div>
-              <button type="button" onClick={() => onPlayer(b)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={b} size={40} /></button>
-            </div>
-          </Card>
-        );
-      })()}
-
-      {oneSided && (() => {
-        const [a, b] = oneSided.ids.map(pById).filter(Boolean);
-        if (!a || !b) return null;
-        const wA = oneSided.wins[a.id] || 0, wB = oneSided.wins[b.id] || 0;
-        const leader = wA > wB ? a : b;
-        const loser  = wA > wB ? b : a;
-        const lw = Math.max(wA, wB), ll = Math.min(wA, wB);
-        return (
-          <Card pad={14} style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 8 }}>Most one-sided</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button type="button" onClick={() => onPlayer(leader)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={leader} size={40} /></button>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{leader.name} <span style={{ color: 'var(--accent)' }}>{lw}</span> – <span style={{ color: 'var(--muted)' }}>{ll}</span> {loser.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 3 }}>{oneSided.total} games played</div>
-              </div>
-              <button type="button" onClick={() => onPlayer(loser)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><Avatar person={loser} size={40} /></button>
-            </div>
-          </Card>
-        );
-      })()}
-    </div>
-  );
-}
-
 export function GamesScreen({ store }) {
   const { people, games } = store;
   const [cat, setCat] = useState('board');
@@ -982,18 +554,15 @@ export function GamesScreen({ store }) {
   const [player, setPlayer] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [gateOpen, setGateOpen] = useState(false);
-  const [pendingGame, setPendingGame] = useState(null);
   const [detailGame, setDetailGame] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
   const openPlayer = (p) => { if (p) { setPlayer(p); setPlayerOpen(true); } };
   const openDetail = (g) => { setDetailGame(g); setDetailOpen(true); };
-  const openEdit = (g) => { setDetailOpen(false); setPendingGame(g); setGateOpen(true); };
+  const openEdit = (g) => { setDetailOpen(false); setEditingGame(g); setEditorOpen(true); };
   const standings = gameStats(people, games, cat);
   const recent = recentGames(games, cat);
   const rest = standings.slice(3);
-  const visibleRest = showAll ? rest : rest.slice(0, 5);
 
   return (
     <div style={{ padding: '4px 18px 28px' }}>
@@ -1050,7 +619,6 @@ export function GamesScreen({ store }) {
 
       <GameDetailSheet store={store} game={detailGame} open={detailOpen} onClose={() => setDetailOpen(false)}
         onPlayer={p => { setDetailOpen(false); openPlayer(p); }} onEdit={openEdit} />
-      <PasscodeGate open={gateOpen} onClose={() => { setGateOpen(false); setPendingGame(null); }} onConfirm={() => { setEditingGame(pendingGame); setEditorOpen(true); }} message="Enter passcode to edit match" />
       <MatchEditor store={store} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingGame(null); }} initialCat={cat} editing={editingGame} />
       <GamePlayerSheet store={store} person={player} open={playerOpen} onClose={() => setPlayerOpen(false)} />
     </div>

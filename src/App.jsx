@@ -1,75 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useStore } from './store.js';
-import { THEMES, themeVars, Icon } from './ui.jsx';
+import { Icon, Btn } from './ui.jsx';
+import { THEMES, themeVars } from './theme.js';
 import { HomeScreen, HistoryScreen, StatsScreen, WeekEditor, PeopleManager, ProfileSheet, ShareSheet } from './screens.jsx';
 import { GamesScreen } from './games.jsx';
 import { WheelScreen } from './wheel.jsx';
-
-const GATE_KEY = 'fr_authed';
-const PASSCODE = '2013';
-
-function AppGate({ onUnlock, themeVars: vars }) {
-  const [pw, setPw] = useState('');
-  const [err, setErr] = useState(false);
-  const MAX = 4;
-
-  const press = (d) => {
-    if (err) { setPw(String(d)); setErr(false); return; }
-    if (pw.length >= MAX) return;
-    const next = pw + d;
-    setPw(next);
-    if (next.length === MAX) {
-      if (next === PASSCODE) { setTimeout(onUnlock, 120); }
-      else { setTimeout(() => { setErr(true); setPw(''); }, 120); }
-    }
-  };
-  const del = () => { setErr(false); setPw(p => p.slice(0, -1)); };
-  const KEYS = [1,2,3,4,5,6,7,8,9,null,0,'⌫'];
-
-  return (
-    <div style={{ ...vars, fontFamily: "ThmanyahSans, system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', padding: '0 32px' }}>
-      <div style={{ fontFamily: 'var(--display)', fontSize: 28, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.5, marginBottom: 6 }}>Folk's Retreat</div>
-      <div style={{ fontSize: 13.5, color: 'var(--muted)', fontWeight: 500, marginBottom: 40 }}>Enter passcode to continue</div>
-
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 40 }}>
-        {Array.from({ length: MAX }).map((_, i) => (
-          <div key={i} style={{
-            width: 14, height: 14, borderRadius: '50%',
-            background: pw.length > i ? (err ? 'oklch(0.58 0.18 25)' : 'var(--ink)') : 'var(--line)',
-            transition: 'background .15s',
-          }} />
-        ))}
-      </div>
-
-      {err && <div style={{ fontSize: 13, fontWeight: 600, color: 'oklch(0.58 0.18 25)', marginBottom: 20, marginTop: -28 }}>Wrong passcode</div>}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, width: '100%', maxWidth: 280 }}>
-        {KEYS.map((k, i) => {
-          if (k === null) return <div key={i} />;
-          const isBack = k === '⌫';
-          return (
-            <button key={i} onClick={() => isBack ? del() : press(k)} style={{
-              height: 68, borderRadius: 22, border: 'none', cursor: 'pointer',
-              fontFamily: isBack ? 'inherit' : 'var(--display)',
-              fontSize: isBack ? 22 : 26, fontWeight: 600,
-              background: isBack ? 'transparent' : 'var(--sunken)',
-              color: isBack ? 'var(--muted)' : 'var(--ink)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: isBack ? 'none' : 'var(--card-shadow)',
-              transition: 'transform .08s',
-            }}
-              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.93)'}
-              onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-              onTouchStart={e => e.currentTarget.style.transform = 'scale(0.93)'}
-              onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-            >{k}</button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function TabBar({ active, onChange }) {
   const tabs = [
@@ -106,7 +41,6 @@ function TabBar({ active, onChange }) {
 
 export default function App() {
   const store = useStore();
-  const [authed, setAuthed] = useState(true);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem('fr_theme') || 'light');
   const [tab, setTab] = useState(() => sessionStorage.getItem('fr-tab') || 'home');
   const [editor, setEditor] = useState({ open: false, editing: null, draft: null });
@@ -125,10 +59,14 @@ export default function App() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
   }, [themeKey]);
 
-  if (!authed) return <AppGate themeVars={vars} onUnlock={() => { localStorage.setItem(GATE_KEY, '1'); setAuthed(true); }} />;
-
-  if (store.loading) return (
-    <div style={{ ...vars, height: '100dvh', background: 'var(--bg)' }} />
+  if (!store.loaded) return (
+    <div style={{ ...vars, minHeight: '100dvh', background: 'var(--bg)', color: 'var(--ink)', display: 'grid', placeItems: 'center', padding: 24 }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1>Folk’s Retreat</h1>
+        <p role={store.loadError ? 'alert' : 'status'}>{store.loadError || 'Loading your gatherings…'}</p>
+        {store.loadError && <Btn onClick={store.reload} disabled={store.loading}>Try again</Btn>}
+      </div>
+    </div>
   );
 
   const toggleTheme = () => {
@@ -157,10 +95,12 @@ export default function App() {
   else screen = <StatsScreen store={store} openPeople={() => setPeopleOpen(true)} openProfile={openProfile} openShare={() => setShareOpen(true)} />;
 
   return (
-    <div style={{ ...vars, fontFamily: "ThmanyahSans, system-ui, sans-serif", height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'fixed', inset: 0, overflow: 'hidden' }}>
+    <div style={{ ...vars, fontFamily: "ThmanyahSans, system-ui, sans-serif", height: '100dvh', width: '100%', maxWidth: 430, margin: '0 auto', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)', WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
+        {store.loadError && <div role="alert" className="status-banner">{store.loadError} Showing the last loaded records. <Btn size="sm" onClick={store.reload} disabled={store.loading}>Retry</Btn></div>}
         {screen}
       </div>
+      {(store.saving || store.mutationError || store.notice) && <div role={store.mutationError ? 'alert' : 'status'} className="status-banner operation-status">{store.saving ? 'Saving…' : store.mutationError || store.notice}</div>}
       <TabBar active={tab} onChange={goTo} />
 
       <WeekEditor store={store} open={editor.open} editing={editor.editing} draft={editor.draft} onClose={closeEditor} />
