@@ -47,3 +47,5 @@ input, textarea { font-family: inherit; }
 }
 button:disabled { cursor: default; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.arena-view-tabs button { min-height: 48px; }

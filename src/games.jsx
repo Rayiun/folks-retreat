@@ -3,7 +3,7 @@ import { todayIso } from './dates.js';
 import { useState, useEffect, useEffectEvent } from 'react';
 import { fmtDateShort, fmtDate, matchSides, gameStats, recentGames, playerGameRecord, playerMatches, rivalryStats } from './store.js';
 import { Avatar, Icon, Sheet, Btn, Card, Segment, ConfirmDelete } from './ui.jsx';
-import { SectionTitle, PageHead, DateField } from './screens.jsx';
+import { SectionTitle, DateField } from './screens.jsx';
 
 const TEAM_B_COLOR = 'oklch(0.62 0.13 245)';
 const teamColor = (t) => (t === 'A' ? 'var(--accent)' : TEAM_B_COLOR);
@@ -112,71 +112,11 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
   );
 }
 
-// ── Podium ────────────────────────────────────────────────
-const PODIUM_META = {
-  1: { av: 60, ped: 56, tone: 'var(--accent)',            pedBg: 'var(--accent-soft)' },
-  2: { av: 48, ped: 40, tone: 'oklch(0.60 0.035 250)',   pedBg: 'color-mix(in oklch, oklch(0.60 0.035 250) 14%, var(--surface))' },
-  3: { av: 48, ped: 30, tone: 'oklch(0.58 0.085 55)',    pedBg: 'color-mix(in oklch, oklch(0.58 0.085 55) 14%, var(--surface))' },
-};
-
-function Podium({ entries, onPlayer }) {
-  // Build dense-ranked groups: [{rank, entries[]}]
-  const groups = [];
-  let currentRank = 1;
-  for (let i = 0; i < entries.length && groups.length < 3;) {
-    const val = entries[i].won;
-    const tied = [];
-    while (i < entries.length && entries[i].won === val) { tied.push(entries[i]); i++; }
-    groups.push({ rank: currentRank, entries: tied });
-    currentRank += 1;
-  }
-  // Pad to 3 slots
-  while (groups.length < 3) groups.push(null);
-  const [g2, g1, g3] = [groups[1], groups[0], groups[2]];
-
-  return (
-    <Card pad={16} style={{ marginBottom: 18, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, var(--accent-soft), transparent 55%)', opacity: 0.45, pointerEvents: 'none' }} />
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 10 }}>
-        {[g2, g1, g3].map((group, slotIdx) => {
-          const displayRank = [2, 1, 3][slotIdx];
-          const m = PODIUM_META[displayRank];
-          if (!group) return <div key={displayRank} style={{ flex: 1 }} />;
-
-          return (
-            <div key={displayRank} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <button onClick={() => onPlayer(group.entries[0].person)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
-                  <TeamMark person={group.entries[0].person} size={m.av} ring={m.tone} crown={group.rank === 1} />
-                </button>
-                {group.entries.length > 1 && (
-                  <div style={{ position: 'absolute', bottom: -4, right: -10, background: 'var(--accent-soft)', color: 'var(--accent)', fontSize: 10, fontWeight: 700, borderRadius: 99, padding: '1px 6px', border: '2px solid var(--surface)' }}>
-                    ×{group.entries.length}
-                  </div>
-                )}
-              </div>
-              <div style={{ fontSize: displayRank === 1 ? 14 : 12.5, fontWeight: 700, color: 'var(--ink)', maxWidth: '100%',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                {group.entries.length > 1 ? 'Tied' : group.entries[0].person.name}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, marginTop: -2 }}>{group.entries[0].won}W</div>
-              <div style={{ width: '100%', height: m.ped, borderRadius: '11px 11px 0 0', background: m.pedBg, marginTop: 2,
-                display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 6 }}>
-                <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: displayRank === 1 ? 20 : 16, color: m.tone }}>{group.rank}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-function StandingRow({ rank, entry, onClick }) {
+function StandingRow({ rank, entry, onClick, spacious = false }) {
   const p = entry.person;
   return (
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', cursor: 'pointer',
-      border: 'none', background: 'none', padding: '10px 2px', textAlign: 'left' }}>
+      border: 'none', background: 'none', padding: spacious ? '15px 2px' : '10px 2px', textAlign: 'left' }}>
       <span style={{ width: 18, fontFamily: 'var(--display)', fontSize: 14, fontWeight: 700, color: 'var(--faint)' }}>{rank}</span>
       <Avatar person={p} size={36} />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -450,7 +390,7 @@ function DayGroups({ store, games, onPlayer, onSelect }) {
 function RivalryBar({ wins, total, idA }) {
   const pct = total === 0 ? 50 : Math.round((wins[idA] || 0) / total * 100);
   return (
-    <div style={{ height: 6, borderRadius: 99, background: 'var(--line)', overflow: 'hidden', margin: '8px 0' }}>
+    <div style={{ height: 5, borderRadius: 99, background: 'var(--line)', overflow: 'hidden', margin: '7px 0' }}>
       <div style={{ height: '100%', width: `${pct}%`, background: 'var(--accent)', borderRadius: 99, transition: 'width .4s' }} />
     </div>
   );
@@ -464,7 +404,7 @@ function RivalriesSection({ store, cat }) {
   const pById = store.personById;
 
   const rivalries = rivalryStats(games, cat);
-  const top = rivalries.slice(0, 3);
+  const top = rivalries.slice(0, 4);
 
   const h2h = pickA && pickB ? rivalries.find(r => r.ids.includes(pickA.id) && r.ids.includes(pickB.id)) : null;
 
@@ -474,9 +414,9 @@ function RivalriesSection({ store, cat }) {
     const wA = r.wins[a.id] || 0, wB = r.wins[b.id] || 0;
     const leader = wA > wB ? a : wB > wA ? b : null;
     return (
-      <Card pad={13} style={{ marginBottom: 10 }}>
+      <Card pad={12} style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Avatar person={a} size={36} />
+          <Avatar person={a} size={34} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{a.name}</span>
@@ -488,10 +428,10 @@ function RivalriesSection({ store, cat }) {
               <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--muted)', fontFamily: 'var(--display)' }}>{wB}</span>
             </div>
           </div>
-          <Avatar person={b} size={36} />
+          <Avatar person={b} size={34} />
         </div>
-        {leader && <div style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--muted)', marginTop: 8 }}>👑 {leader.name} leads · {r.total} games</div>}
-        {!leader && <div style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--muted)', marginTop: 8 }}>Tied · {r.total} games</div>}
+        {leader && <div style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--muted)', marginTop: 6 }}>👑 {leader.name} leads · {r.total} games</div>}
+        {!leader && <div style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--muted)', marginTop: 6 }}>Tied · {r.total} games</div>}
       </Card>
     );
   };
@@ -579,11 +519,13 @@ export function FullStandingsSheet({ open, onClose, standings, cat, onCategoryCh
 export function GamesScreen({ store }) {
   const { people, games } = store;
   const [cat, setCat] = useState('all');
+  const [showAll, setShowAll] = useState(false);
+  const [view, setView] = useState('standings');
+  const [allResults, setAllResults] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [player, setPlayer] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
-  const [showAll, setShowAll] = useState(false);
   const [detailGame, setDetailGame] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -592,48 +534,57 @@ export function GamesScreen({ store }) {
   const openEdit = (g) => { setDetailOpen(false); setEditingGame(g); setEditorOpen(true); };
   const standings = gameStats(people, games, cat);
   const recent = recentGames(games, cat);
-  const rest = standings.slice(3);
+  const ranks = [...new Set(standings.map(entry => entry.won))];
+  const recentDates = [...new Set(recent.map(game => game.date))];
+  const visibleResults = allResults ? recent : recent.filter(game => recentDates.slice(0, 6).includes(game.date));
 
   return (
     <div style={{ padding: '4px 18px 28px' }}>
-      <PageHead title="The Arena" sub="Bragging rights, officially logged!" />
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0 20px' }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--display)', fontSize: 32, color: 'var(--ink)', margin: 0 }}>The Arena</h1>
+        </div>
+        <Btn variant="primary" icon="plus" onClick={() => setEditorOpen(true)}>Log a match</Btn>
+      </header>
       <ArenaCategoryFilter cat={cat} onChange={setCat} />
+      <div className="arena-view-tabs" style={{ marginBottom: 20 }}>
+        <Segment value={view} onChange={setView} options={[
+          { value: 'standings', label: 'Standings' }, { value: 'results', label: 'Results' }, { value: 'rivalries', label: 'Rivalries' },
+        ]} />
+      </div>
 
-      {standings.length > 0 ? (
-        <>
-          <Podium entries={standings} onPlayer={openPlayer} />
-          {rest.length > 0 && (
-            <button onClick={() => setShowAll(true)} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%',
-              border: 'none', background: 'var(--sunken)', cursor: 'pointer', borderRadius: 14,
-              padding: '11px 0', marginBottom: 20, fontFamily: 'inherit', fontSize: 13.5, fontWeight: 700, color: 'var(--accent)' }}>
-              <Icon name="list" size={15} sw={2.2} /> Full table · {standings.length} players
-            </button>
-          )}
+      {view === 'standings' && <>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 12 }}>
+          <h2 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: 20, color: 'var(--ink)' }}>The leaderboard</h2>
+          <span style={{ color: 'var(--muted)', fontSize: 12 }}>{recent.length} {recent.length === 1 ? 'match' : 'matches'}</span>
+        </div>
+        {standings.length ? <Card pad={12}>
+          {standings.slice(0, 5).map((entry, i) => <div key={entry.person.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
+            <StandingRow spacious rank={ranks.indexOf(entry.won) + 1} entry={entry} onClick={() => openPlayer(entry.person)} />
+          </div>)}
 
-        </>
-      ) : (
-        <Card style={{ textAlign: 'center', marginBottom: 18 }} pad={26}>
-          <div style={{ fontFamily: 'var(--display)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>{cat === 'all' ? 'No matches yet' : `No ${cat === 'fifa' ? 'FIFA' : 'Others'} matches yet`}</div>
-          <div style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 4 }}>Someone's scared to lose. Log the first match.</div>
-        </Card>
-      )}
+          {standings.length > 5 && <button type="button" onClick={() => setShowAll(true)} style={{ width: '100%', border: 'none', borderTop: '1px solid var(--line)', background: 'none', color: 'var(--accent)', padding: '16px 0 4px', font: 'inherit', fontSize: 13, cursor: 'pointer' }}>
+            See all {standings.length} players
+          </button>}
+
+        </Card> : <Card pad={24} style={{ textAlign: 'center' }}>
+          <div style={{ color: 'var(--ink)', fontSize: 16 }}>{cat === 'all' ? 'No matches yet' : `No ${cat === 'fifa' ? 'FIFA' : 'Others'} matches yet`}</div>
+          <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>Log a match to start the leaderboard.</div>
+        </Card>}
+        <div style={{ color: 'var(--muted)', fontSize: 12, textAlign: 'center', marginTop: 12 }}>Ranked by wins · Tap a player for their record</div>
+      </>}
+
+      {view === 'results' && <>
+        <SectionTitle>Match history</SectionTitle>
+        {recent.length ? <>
+          <DayGroups store={store} games={visibleResults} onPlayer={openPlayer} onSelect={openDetail} />
+          {recentDates.length > 6 && <Btn variant="quiet" onClick={() => setAllResults(value => !value)} style={{ width: '100%' }}>{allResults ? 'Show latest 6 nights' : 'See all nights'}</Btn>}
+        </> : <Card style={{ color: 'var(--muted)', textAlign: 'center' }}>No results in this category yet.</Card>}
+      </>}
+      {view === 'rivalries' && <RivalriesSection store={store} cat={cat} />}
 
       <FullStandingsSheet open={showAll} onClose={() => setShowAll(false)} standings={standings}
         cat={cat} onCategoryChange={setCat} onPlayer={openPlayer} />
-
-      <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
-        Log a match
-      </Btn>
-
-      <RivalriesSection store={store} cat={cat} />
-
-      {recent.length > 0 && (
-        <>
-          <SectionTitle>Recent results</SectionTitle>
-          <DayGroups store={store} games={recent} onPlayer={openPlayer} onSelect={openDetail} />
-        </>
-      )}
 
       <GameDetailSheet store={store} game={detailGame} open={detailOpen} onClose={() => setDetailOpen(false)}
         onPlayer={p => { setDetailOpen(false); openPlayer(p); }} onEdit={openEdit} />
