@@ -1,7 +1,7 @@
 import { memberColor } from './theme.js';
 import { useState, useRef, useEffect } from 'react';
 import { lastFetcher, initials, fmtDateShort } from './store.js';
-import { Avatar, Icon, Sheet, Btn, ConfirmDelete } from './ui.jsx';
+import { Avatar, Icon, Sheet, Btn, Segment, ConfirmDelete } from './ui.jsx';
 
 let _actx = null;
 function ensureCtx() {
@@ -96,6 +96,7 @@ function Wheel({ people, angle }) {
 }
 
 export function WheelScreen({ store }) {
+  const [view, setView] = useState('spin');
   const { people, weeks, fetches, personById } = store;
   const lastAttendees = weeks[0] ? weeks[0].attendees : [];
   const [selected, setSelected] = useState(() => new Set(lastAttendees.length ? lastAttendees : people.map(p => p.id)));
@@ -184,13 +185,14 @@ export function WheelScreen({ store }) {
   useEffect(() => () => { cancelAnimationFrame(rafRef.current); clearTimeout(safetyRef.current); }, []);
 
   return (
-    <div style={{ padding: '4px 18px 16px' }}>
-      <div style={{ marginBottom: 14 }}>
+    <div className="shame-page" style={{ padding: '4px 18px 8px' }}>
+      <div style={{ marginBottom: 10, paddingTop: 2 }}>
         <h1 style={{ margin: 0, fontFamily: 'var(--display)', fontSize: 30, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.6 }}>The Walk of Shame</h1>
-        <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: 14.5 }}>Spin to find tonight's sucker!</p>
       </div>
 
-      <div style={{ position: 'relative', width: '100%', maxWidth: 340, margin: '6px auto 8px', aspectRatio: '1' }}>
+      <div style={{ marginBottom: 8 }}><Segment value={view} onChange={setView} options={[{ value: 'spin', label: 'Tonight’s spin' }, { value: 'history', label: 'Fetch history' }]} /></div>
+      {view === 'spin' && <>
+      <div style={{ position: 'relative', width: 'clamp(140px, calc(100dvh - 480px), 250px)', maxWidth: '100%', margin: '12px auto 6px', aspectRatio: '1' }}>
         <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%) rotate(180deg)', zIndex: 5,
           fontSize: 38, lineHeight: 1, userSelect: 'none', pointerEvents: 'none',
           filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.28))' }}>🖕🏼</div>
@@ -212,9 +214,9 @@ export function WheelScreen({ store }) {
         <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }} />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
         <Btn onClick={spin} disabled={!canSpin} size="lg" icon={spinning ? null : 'shuffle'}
-          style={{ minWidth: 200, boxShadow: canSpin ? '0 6px 18px color-mix(in oklch, var(--accent) 40%, transparent)' : 'none' }}>
+          style={{ width: '100%', boxShadow: canSpin ? '0 6px 18px color-mix(in oklch, var(--accent) 40%, transparent)' : 'none' }}>
           {spinning ? 'Spinning…' : 'Spin the wheel'}
         </Btn>
       </div>
@@ -230,11 +232,11 @@ export function WheelScreen({ store }) {
           Fair mode
         </button>
       </div>
-      <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 12, margin: '0 0 16px', padding: '0 20px', lineHeight: 1.4 }}>
+      <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 12, margin: '0 0 8px', padding: '0 4px', lineHeight: 1.4 }}>
         {fairMode ? 'Favours whoever has fetched least — and never the same person twice in a row.' : 'Pure luck — every name has an equal shot.'}
       </p>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
           Who's here · {pool.length}
         </span>
@@ -243,38 +245,40 @@ export function WheelScreen({ store }) {
           <Btn variant="quiet" size="sm" onClick={() => setAll(false)}>Clear</Btn>
         </div>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }}>
         {people.map(p => {
           const on = selected.has(p.id);
           return (
-            <button key={p.id} onClick={() => toggle(p.id)} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 12px 6px 6px',
-              borderRadius: 99, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+            <button key={p.id} type="button" aria-pressed={on} disabled={spinning} onClick={() => toggle(p.id)} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '6px', minHeight: 38, minWidth: 0,
+              borderRadius: 14, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               background: on ? 'var(--accent-soft)' : 'var(--sunken)',
               color: on ? 'var(--accent)' : 'var(--muted)',
               fontSize: 14, fontWeight: 600, transition: 'all .15s',
               boxShadow: on ? 'inset 0 0 0 1.5px var(--accent)' : 'none',
             }}>
-              <Avatar person={p} size={26} dim={!on} />
-              {p.name}
+              <Avatar person={p} size={24} dim={!on} />
+              <span style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
             </button>
           );
         })}
       </div>
 
-      {fetches.length > 0 && (
+      </>}
+      {view === 'history' && fetches.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: 'var(--muted)' }}>No food runs logged yet.</div>}
+      {view === 'history' && fetches.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 10 }}>
             Fetch history
           </div>
-          {fetches.slice(0, 6).map((f, i) => {
+          {fetches.map((f, i) => {
             const p = personById(f.personId);
             if (!p) return null;
             const timesChosen = fetches.filter(x => x.personId === f.personId).length;
             const pct = Math.round((timesChosen / fetches.length) * 100);
             return (
               <div key={f.id || i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
-                borderBottom: i < Math.min(fetches.length, 6) - 1 ? '1px solid var(--line)' : 'none' }}>
+                borderBottom: i < fetches.length - 1 ? '1px solid var(--line)' : 'none' }}>
                 <Avatar person={p} size={36} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</div>
