@@ -2,7 +2,7 @@
 
 body {
   margin: 0;
-  background: oklch(0.91 0.012 70);
+  background: var(--startup-bg, #f5ede0);
   font-family: ThmanyahSans, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -16,7 +16,7 @@ body {
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  background: var(--bg, oklch(0.962 0.014 70));
+  background: var(--startup-bg, #f5ede0);
 }
 
 button { font-family: inherit; }

@@ -40,18 +40,12 @@ test('historical hosting credit survives and the later logged date wins', () => 
   assert.equal(old.hosted, bonusHostedDates(p.name).length + 1);
   assert.equal(old.lastHostedIso, bonusHostedDates(p.name).at(-1));
 });
-for (const missed of ['2026-10-22', '2026-10-23']) {
-  test(`missing Thursday or Friday (${missed}) breaks the streak`, () => {
-    const weeks = [night('2026-10-24', 'a', ['a']), night(missed, 'b'), night('2026-10-15', 'a', ['a'])];
-    assert.equal(attendanceInfo(person('a'), weeks).streak, 1);
-  });
-}
-test('Saturday through Wednesday misses are skipped; input order does not matter', () => {
+test('attendance totals count all nights regardless of weekday or input order', () => {
   const weeks = [night('2026-10-15', 'a', ['a']), ...['17', '18', '19', '20', '21'].map(day => night(`2026-10-${day}`, 'b')), night('2026-10-23', 'a', ['a'])];
-  assert.deepEqual(attendanceInfo(person('a'), weeks), { attended: 2, total: 7, rate: 29, streak: 2 });
+  assert.deepEqual(attendanceInfo(person('a'), weeks), { attended: 2, total: 7, rate: 29 });
 });
 test('empty attendance history has zero stats', () => {
-  assert.deepEqual(attendanceInfo(person('a'), []), { attended: 0, total: 0, rate: 0, streak: 0 });
+  assert.deepEqual(attendanceInfo(person('a'), []), { attended: 0, total: 0, rate: 0 });
 });
 test('the night rolls over at 7am, including month boundaries', () => {
   assert.equal(todayIso(new Date(2026, 10, 1, 6, 59)), '2026-10-31');

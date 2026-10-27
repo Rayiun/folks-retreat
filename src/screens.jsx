@@ -309,7 +309,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
     rows = hostStats(people, weeks).map(s => {
       if (mode === 'hosted') return { person: s.person, val: s.hosted, sub: s.lastHostedIso ? 'last ' + fmtDateShort(s.lastHostedIso) : 'never hosted' };
       const ai = attendanceInfo(s.person, weeks);
-      return { person: s.person, val: s.attended, sub: `${ai.rate}% rate · streak ${ai.streak}` };
+      return { person: s.person, val: s.attended, sub: `${ai.rate}% rate` };
     });
     rows.sort((a, b) => b.val - a.val);
   }
@@ -623,7 +623,6 @@ export function ProfileSheet({ store, person: personProp, open, onClose, openEdi
         <MiniStat value={ai.rate + '%'} label="Attendance" color="var(--good)" />
       </div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <MiniStat value={ai.streak} label="Streak" />
         <MiniStat value={fetched} label="Fetched" color="oklch(0.66 0.13 295)" />
       </div>
       <button disabled={store.saving} onClick={() => store.toggleAway(person.id)} style={{

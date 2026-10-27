@@ -20,7 +20,16 @@
       @font-face { font-family: 'ThmanyahSerif'; src: url('/thmanyahserifdisplay-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
       @font-face { font-family: 'ThmanyahSerif'; src: url('/thmanyahserifdisplay-Black.woff2') format('woff2'); font-weight: 900; font-display: swap; }
     </style>
-  <script>var _c=localStorage.getItem('fr_theme')==='dark'?'#2e2a23':'#f5ede0';document.documentElement.style.background=_c;document.body&&(document.body.style.background=_c);</script>
+  <script>
+    (() => {
+      let dark = false;
+      try { dark = localStorage.getItem('fr_theme') === 'dark'; } catch { /* Use light when storage is unavailable. */ }
+      const color = dark ? '#211f1c' : '#f5ede0';
+      document.documentElement.style.setProperty('--startup-bg', color);
+      document.documentElement.style.background = color;
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', color);
+    })();
+  </script>
   <style>body { background: transparent; margin: 0; }</style>
   </head>
   <body>

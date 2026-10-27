@@ -71,16 +71,7 @@ export function lastFetcher(fetches, personById) {
 export function attendanceInfo(person, weeks) {
   const total = weeks.length;
   const attended = weeks.filter(w => w.attendees.includes(person.id)).length;
-  const ordered = [...weeks].sort((a, b) => (a.date < b.date ? 1 : -1));
-  let streak = 0;
-  for (const w of ordered) {
-    if (w.attendees.includes(person.id)) { streak++; }
-    else {
-      const day = new Date(w.date + 'T12:00:00').getDay(); // 4=Thu, 5=Fri
-      if (day === 4 || day === 5) break;
-    }
-  }
-  return { attended, total, rate: total ? Math.round((attended / total) * 100) : 0, streak };
+  return { attended, total, rate: total ? Math.round((attended / total) * 100) : 0 };
 }
 export function rotationOrder(people, weeks) {
   const groups = linkedHostIds(people);
@@ -106,18 +97,11 @@ export function matchSides(g) {
 
 export function gameStats(people, games, cat) {
   const list = (games || []).filter(g => (cat === 'all' || g.cat === cat));
-  const byDate = [...list].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return people.map(p => {
     const mine = list.filter(g => matchSides(g).players.includes(p.id));
     const won = mine.filter(g => matchSides(g).winners.includes(p.id)).length;
     const played = mine.length;
-    let streak = 0;
-    for (const g of byDate) {
-      const s = matchSides(g);
-      if (!s.players.includes(p.id)) continue;
-      if (s.winners.includes(p.id)) streak++; else break;
-    }
-    return { person: p, played, won, lost: played - won, winRate: played ? Math.round((won / played) * 100) : 0, streak };
+    return { person: p, played, won, lost: played - won, winRate: played ? Math.round((won / played) * 100) : 0 };
   }).filter(x => x.played > 0)
     .sort((a, b) => b.won - a.won || b.winRate - a.winRate || b.played - a.played);
 }
