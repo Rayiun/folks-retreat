@@ -10,7 +10,7 @@ test('one winner and multiple losers need no score for either category', () => {
     const result = buildMatchResult({ ...base, cat, losers: ['b', 'c'] });
     assert.deepEqual(matchSides(result), { players: ['a', 'b', 'c'], winners: ['a'] });
     assert.equal(result.score, null);
-    assert.equal(result.title, cat === 'fifa' ? 'FIFA' : 'Game night');
+    assert.equal(result.title, cat === 'fifa' ? 'FIFA' : 'Others');
   }
 });
 test('multiple winners and losers use the existing team format and count each result correctly', () => {

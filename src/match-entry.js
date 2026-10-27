@@ -19,11 +19,11 @@ export function toggleParticipant(entry, side, id) {
 
 const sameMembers = (a, b) => a.length === b.length && a.every(id => b.includes(id));
 
-export function buildMatchResult({ cat, date, title, winners, losers }, editing = null) {
+export function buildMatchResult({ cat, date, winners, losers }, editing = null) {
   if (!['board', 'fifa'].includes(cat) || !/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return null;
   if (!winners.length || !losers.length || winners.some(id => losers.includes(id))) return null;
   if (new Set(winners).size !== winners.length || new Set(losers).size !== losers.length) return null;
-  const base = { cat, date, title: cat === 'fifa' ? 'FIFA' : title.trim() || 'Game night', score: null };
+  const base = { cat, date, title: cat === 'fifa' ? 'FIFA' : (editing?.cat === 'board' && editing.title) || 'Others', score: null };
   const previous = entryFromGame(editing);
   if (editing && cat === editing.cat && sameMembers(winners, previous.winners) && sameMembers(losers, previous.losers)) {
     // Keep historical team orientation and scores when only date/title changed.

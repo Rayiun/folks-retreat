@@ -22,9 +22,10 @@ No additional packages are required.
 ## Arena logging
 
 The match logger retains the existing sheets, avatars, and theme. Choose FIFA or
-Board Game, then select one or more winners and one or more losers. Players cannot
-appear on both sides. No score, team mode, or game title is required. Optional name
-and date controls are collapsed below the player pickers. New results use the
+Others, then select one or more winners and one or more losers. Players cannot
+appear on both sides. No score, team mode, or game title is required. Only the optional date control is collapsed below the player pickers.
+There is no game-name input; new non-FIFA results are titled Others. Existing
+named results retain their titles when edited. New results use the
 existing solo/team database formats, so no schema migration is required. Historical
 scores remain intact when only a match's date/title is edited. Changing participants,
 category, or outcome clears a score that no longer describes the result.

@@ -57,14 +57,12 @@ function ResultPlayers({ people, selected, side, onToggle }) {
 export function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const [cat, setCat] = useState(editing?.cat || initialCat || 'board');
   const [date, setDate] = useState(editing?.date || todayIso());
-  const [title, setTitle] = useState(editing?.title || '');
   const [entry, setEntry] = useState(() => entryFromGame(editing));
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const prepareEditor = useEffectEvent(() => {
     setCat(editing?.cat || initialCat || 'board');
     setDate(editing?.date || todayIso());
-    setTitle(editing?.title || '');
     setEntry(entryFromGame(editing));
     setDetailsOpen(false);
     setConfirmOpen(false);
@@ -74,7 +72,7 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
   // Preserve participants from older results even if they are no longer in the roster.
   const missingIds = [...entry.winners, ...entry.losers].filter(id => !store.people.some(person => person.id === id));
   const people = [...store.people, ...missingIds.map(id => ({ id, name: 'Former member', color: 'var(--muted)' }))];
-  const result = buildMatchResult({ cat, date, title, ...entry }, editing);
+  const result = buildMatchResult({ cat, date, ...entry }, editing);
   const toggle = (side, id) => setEntry(current => toggleParticipant(current, side, id));
   const save = async () => {
     if (!result || store.saving) return;
@@ -85,7 +83,7 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
   return (
     <Sheet open={open} onClose={store.saving ? undefined : onClose} title={editing ? 'Edit match' : 'Log a match'}>
       <fieldset disabled={store.saving} className="editor-fields">
-        <Segment value={cat} options={[{ value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Board Game' }]} onChange={setCat} />
+        <Segment value={cat} options={[{ value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Others' }]} onChange={setCat} />
         <div style={{ margin: '22px 0 12px' }}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 19, fontWeight: 700, color: 'var(--ink)' }}>Who won? <span style={{ color: 'var(--accent)', fontSize: 14 }}>{entry.winners.length || ''}</span></div>
           <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 3 }}>Choose one or more players.</div>
@@ -98,12 +96,9 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
         <ResultPlayers people={people.filter(person => !entry.winners.includes(person.id))} selected={entry.losers} side="losers" onToggle={toggle} />
         <div style={{ margin: '16px 0' }}>
           <button type="button" aria-expanded={detailsOpen} onClick={() => setDetailsOpen(value => !value)} style={{ border: 'none', background: 'none', color: 'var(--muted)', fontSize: 12, padding: '10px 0', cursor: 'pointer' }}>
-            {detailsOpen ? 'Hide details' : `${fmtDateShort(date)} · ${cat === 'board' ? 'Game name or date' : 'Change date'}`}
+            {detailsOpen ? 'Hide details' : `${fmtDateShort(date)} · Change date`}
           </button>
           {detailsOpen && <div style={{ display: 'grid', gap: 14, marginBottom: 12 }}>
-            {cat === 'board' && <label style={{ color: 'var(--muted)', fontSize: 12 }}>Game name · optional
-              <input value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Baloot" style={{ display: 'block', width: '100%', marginTop: 6, padding: 12, borderRadius: 13, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 16 }} />
-            </label>}
             <DateField value={date} onChange={setDate} />
           </div>}
         </div>
@@ -257,7 +252,8 @@ function MatchRow({ store, game, onPlayer, onSelect }) {
       <Card onClick={() => onSelect(game)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, cursor: 'pointer' }} pad={13}>
         {body}
         <div style={{ textAlign: 'right' }}>
-          <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{fmtDateShort(game.date)}</span>
+          <span style={{ display: 'inline-block', background: 'var(--sunken)', color: 'var(--muted)', borderRadius: 99, padding: '3px 8px', fontSize: 10.5, fontWeight: 600, marginBottom: 5 }}>{game.cat === 'fifa' ? 'FIFA' : 'Others'}</span>
+          <div style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{fmtDateShort(game.date)}</div>
         </div>
       </Card>
     </>
@@ -334,7 +330,7 @@ function GameDetailSheet({ store, game, open, onClose, onPlayer, onEdit }) {
       <Lbl>Details</Lbl>
       <Card pad={14} style={{ marginBottom: 20 }}>
         <MetaRow label="Date" value={fmtDate(game.date)} />
-        <MetaRow label="Game" value={game.cat === 'fifa' ? 'FIFA' : (game.title || 'Board game')} />
+        <MetaRow label="Game" value={game.cat === 'fifa' ? 'FIFA' : (game.title || 'Others')} />
         <MetaRow label="Format" value={isTeams ? 'Teams' : 'Free-for-all'} />
         <MetaRow label="Players" value={players.length} last />
       </Card>
@@ -385,7 +381,7 @@ function GamePlayerSheet({ store, person, open, onClose }) {
         </div>
       </div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
-        <RecordBlock label="Board Games" rec={board} />
+        <RecordBlock label="Others" rec={board} />
         <RecordBlock label="FIFA" rec={fifa} />
       </div>
       {matches.length > 0 && (
@@ -548,7 +544,7 @@ function RivalriesSection({ store, cat }) {
 
 export function GamesScreen({ store }) {
   const { people, games } = store;
-  const [cat, setCat] = useState('board');
+  const [cat, setCat] = useState('all');
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [player, setPlayer] = useState(null);
@@ -567,8 +563,14 @@ export function GamesScreen({ store }) {
   return (
     <div style={{ padding: '4px 18px 28px' }}>
       <PageHead title="The Arena" sub="Bragging rights, officially logged!" />
-      <div style={{ marginBottom: 18 }}>
-        <Segment value={cat} options={[{ value: 'board', label: 'Board Games' }, { value: 'fifa', label: 'FIFA' }]} onChange={v => { setCat(v); setShowAll(false); }} />
+      <div role="group" aria-label="Arena stats filter" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+        <span style={{ color: 'var(--muted)', fontSize: 12, marginRight: 4 }}>Stats</span>
+        {[{ value: 'all', label: 'All' }, { value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Others' }].map(option => (
+          <button key={option.value} type="button" aria-pressed={cat === option.value} onClick={() => { setCat(option.value); setShowAll(false); }} style={{
+            border: 'none', borderRadius: 99, padding: '8px 14px', minHeight: 38, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            background: cat === option.value ? 'var(--accent-soft)' : 'transparent', color: cat === option.value ? 'var(--accent)' : 'var(--muted)',
+          }}>{option.label}</button>
+        ))}
       </div>
 
       {standings.length > 0 ? (
@@ -599,13 +601,13 @@ export function GamesScreen({ store }) {
         </>
       ) : (
         <Card style={{ textAlign: 'center', marginBottom: 18 }} pad={26}>
-          <div style={{ fontFamily: 'var(--display)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>No {cat === 'board' ? 'Board Games' : 'FIFA'} yet</div>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>{cat === 'all' ? 'No matches yet' : `No ${cat === 'fifa' ? 'FIFA' : 'Others'} matches yet`}</div>
           <div style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 4 }}>Someone's scared to lose. Log the first match.</div>
         </Card>
       )}
 
       <Btn variant="primary" size="lg" icon="plus" onClick={() => setEditorOpen(true)} style={{ width: '100%', marginBottom: 24 }}>
-        Log a {cat === 'fifa' ? 'FIFA' : 'board'} match
+        Log a match
       </Btn>
 
       <RivalriesSection store={store} cat={cat} />
@@ -619,7 +621,7 @@ export function GamesScreen({ store }) {
 
       <GameDetailSheet store={store} game={detailGame} open={detailOpen} onClose={() => setDetailOpen(false)}
         onPlayer={p => { setDetailOpen(false); openPlayer(p); }} onEdit={openEdit} />
-      <MatchEditor store={store} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingGame(null); }} initialCat={cat} editing={editingGame} />
+      <MatchEditor store={store} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingGame(null); }} initialCat={cat === 'all' ? 'board' : cat} editing={editingGame} />
       <GamePlayerSheet store={store} person={player} open={playerOpen} onClose={() => setPlayerOpen(false)} />
     </div>
   );

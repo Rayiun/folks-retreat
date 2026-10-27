@@ -105,7 +105,7 @@ export function matchSides(g) {
 }
 
 export function gameStats(people, games, cat) {
-  const list = (games || []).filter(g => g.cat === cat);
+  const list = (games || []).filter(g => (cat === 'all' || g.cat === cat));
   const byDate = [...list].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return people.map(p => {
     const mine = list.filter(g => matchSides(g).players.includes(p.id));
@@ -123,7 +123,7 @@ export function gameStats(people, games, cat) {
 }
 
 export function playerGameRecord(person, games, cat) {
-  const list = (games || []).filter(g => g.cat === cat && matchSides(g).players.includes(person.id));
+  const list = (games || []).filter(g => (cat === 'all' || g.cat === cat) && matchSides(g).players.includes(person.id));
   const won = list.filter(g => matchSides(g).winners.includes(person.id)).length;
   const played = list.length;
   return { played, won, lost: played - won, winRate: played ? Math.round((won / played) * 100) : 0 };
@@ -133,13 +133,13 @@ export function playerMatches(person, games) {
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 }
 export function recentGames(games, cat) {
-  return (games || []).filter(g => g.cat === cat)
+  return (games || []).filter(g => (cat === 'all' || g.cat === cat))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 }
 
 export function rivalryStats(games, cat) {
   const map = {};
-  (games || []).filter(g => g.cat === cat).forEach(g => {
+  (games || []).filter(g => (cat === 'all' || g.cat === cat)).forEach(g => {
     let pairs = []; // [winnerId, loserId]
     if (g.format === 'teams') {
       const winners = g.winner === 'A' ? (g.teamA || []) : (g.teamB || []);

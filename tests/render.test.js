@@ -19,6 +19,11 @@ test('screens and editors render with synthetic records, without production requ
     for (const Component of [screens.HomeScreen, screens.HistoryScreen, screens.StatsScreen, GamesScreen, WheelScreen]) {
       assert.ok(renderToString(React.createElement(Component, { store, openEditor: noop, goTo: noop, openProfile: noop, openPeople: noop, openShare: noop, toggleTheme: noop })).length);
     }
+    const arena = renderToString(React.createElement(GamesScreen, { store }));
+    assert.match(arena, /Arena stats filter/);
+    assert.match(arena, /aria-pressed="true"[^>]*>All</);
+    assert.match(arena, /Log a match/);
+    assert.match(arena, /No matches yet/);
     const week = { id: 'w1', date: '2026-10-23', hostId: 'a', attendees: ['a'], note: '' };
     const weekForm = renderToString(React.createElement(screens.WeekEditor, { store, editing: week, open: true, onClose: noop }));
     assert.match(weekForm, /Edit night/);
@@ -30,7 +35,7 @@ test('screens and editors render with synthetic records, without production requ
     assert.match(matchForm, /Who lost/);
     assert.match(matchForm, /Winning players/);
     assert.match(matchForm, /Losing players/);
-    assert.doesNotMatch(matchForm, /Team A|Team B|No draws|Log FIFA instead/);
+    assert.doesNotMatch(matchForm, /Team A|Team B|No draws|Log FIFA instead|Game name|e.g. Baloot/);
     const selectedMatch = renderToString(React.createElement(MatchEditor, {
       store, open: true, onClose: noop,
       editing: { id: 'g1', cat: 'fifa', date: '2026-10-23', format: 'ffa', players: ['a', 'b'], winnerId: 'a' },
