@@ -1,3 +1,4 @@
+import { memberColor } from './theme.js';
 import { todayIso } from './dates.js';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -199,7 +200,7 @@ function MonthGrid({ y, m, byDate, store, openEditor }) {
             <div key={i} onClick={week ? () => openEditor(week) : undefined} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: week ? 'pointer' : 'default' }}>
               {week ? (
                 host ? (
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: host.color, color: '#fff',
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: memberColor(host.color), color: 'var(--member-ink, #fff)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--display)', fontWeight: 700, fontSize: 12,
                     boxShadow: '0 2px 6px rgba(0,0,0,0.18)' }}>{initials(host.name)}</div>
                 ) : (

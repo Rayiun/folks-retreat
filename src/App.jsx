@@ -53,7 +53,7 @@ export default function App() {
   const vars = themeVars(themeKey);
 
   useEffect(() => {
-    const color = themeKey === 'dark' ? '#2e2a23' : '#f5ede0';
+    const color = themeKey === 'dark' ? '#211f1c' : '#f5ede0';
     document.body.style.background = color;
     document.documentElement.style.background = color;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
@@ -73,7 +73,7 @@ export default function App() {
     const next = themeKey === 'dark' ? 'light' : 'dark';
     setThemeKey(next);
     localStorage.setItem('fr_theme', next);
-    const color = next === 'dark' ? '#2e2a23' : '#f5ede0';
+    const color = next === 'dark' ? '#211f1c' : '#f5ede0';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
     document.documentElement.style.background = color;
     document.body.style.background = color;

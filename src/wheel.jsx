@@ -1,3 +1,4 @@
+import { memberColor } from './theme.js';
 import { useState, useRef, useEffect } from 'react';
 import { lastFetcher, initials, fmtDateShort } from './store.js';
 import { Avatar, Icon, Sheet, Btn, ConfirmDelete } from './ui.jsx';
@@ -80,8 +81,8 @@ function Wheel({ people, angle }) {
         const big = n <= 8;
         return (
           <g key={p.id}>
-            <path d={slicePath(C, C, R, a0, a1)} fill={p.color} stroke="var(--surface)" strokeWidth="2.5" />
-            <text x={lx} y={ly} fill="oklch(0.99 0.01 80)" fontFamily="var(--display)" fontWeight="700"
+            <path d={slicePath(C, C, R, a0, a1)} fill={memberColor(p.color)} stroke="var(--surface)" strokeWidth="2.5" />
+            <text x={lx} y={ly} fill="var(--member-ink, oklch(0.99 0.01 80))" fontFamily="var(--display)" fontWeight="700"
               fontSize={big ? 20 : 15} textAnchor="middle" dominantBaseline="central"
               transform={`rotate(${mid} ${lx} ${ly})`} style={{ pointerEvents: 'none', userSelect: 'none' }}>
               {initials(p.name)}

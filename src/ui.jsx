@@ -1,3 +1,4 @@
+import { memberColor } from './theme.js';
 import { useState, useEffect } from 'react';
 import { initials } from './store.js';
 
@@ -9,11 +10,11 @@ export function Avatar({ person, size = 40, ring = false, dim = false }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: person.color, color: 'oklch(0.99 0.01 80)',
+      background: memberColor(person.color), color: 'var(--member-ink, oklch(0.99 0.01 80))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: 'var(--display)', fontWeight: 600,
       fontSize: size * 0.36, letterSpacing: 0.3,
-      boxShadow: ring ? '0 0 0 3px var(--surface), 0 0 0 5.5px ' + person.color : 'none',
+      boxShadow: ring ? '0 0 0 3px var(--surface), 0 0 0 5.5px ' + memberColor(person.color) : 'none',
       opacity: dim ? 0.32 : 1, transition: 'opacity .2s, box-shadow .2s',
       userSelect: 'none',
     }}>{initials(person.name)}</div>
