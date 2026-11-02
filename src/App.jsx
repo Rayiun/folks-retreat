@@ -58,6 +58,8 @@ export default function App() {
     const color = themeKey === 'dark' ? '#211f1c' : '#f5ede0';
     document.body.style.background = color;
     document.documentElement.style.background = color;
+    document.documentElement.style.setProperty('--startup-bg', color);
+    document.documentElement.style.colorScheme = themeKey === 'dark' ? 'dark' : 'light';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
   }, [themeKey]);
 
@@ -78,6 +80,8 @@ export default function App() {
     const color = next === 'dark' ? '#211f1c' : '#f5ede0';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
     document.documentElement.style.background = color;
+    document.documentElement.style.setProperty('--startup-bg', color);
+    document.documentElement.style.colorScheme = next === 'dark' ? 'dark' : 'light';
     document.body.style.background = color;
   };
 

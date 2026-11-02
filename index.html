@@ -27,6 +27,7 @@
       const color = dark ? '#211f1c' : '#f5ede0';
       document.documentElement.style.setProperty('--startup-bg', color);
       document.documentElement.style.background = color;
+      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
       document.querySelector('meta[name="theme-color"]').setAttribute('content', color);
     })();
   </script>
