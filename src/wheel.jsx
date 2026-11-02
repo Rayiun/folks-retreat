@@ -231,9 +231,7 @@ export function WheelScreen({ store }) {
           Fair mode
         </button>
       </div>
-      <p style={{ textAlign: 'center', color: 'var(--faint)', fontSize: 12, margin: '0 0 8px', padding: '0 4px', lineHeight: 1.4 }}>
-        {fairMode ? 'Favours whoever has fetched least — and never the same person twice in a row.' : 'Pure luck — every name has an equal shot.'}
-      </p>
+
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
