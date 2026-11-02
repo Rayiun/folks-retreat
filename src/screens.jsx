@@ -102,7 +102,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         </button>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22, gap: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, gap: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0, flexShrink: 0 }}>
           <div>
             <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 700, color: 'var(--ink)', letterSpacing: -0.4, lineHeight: 1 }}>{350 + weeks.length}</div>
@@ -129,7 +129,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
         if (today.getHours() < 7) today.setDate(today.getDate() - 1);
         const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
         openEditor({ date: iso, attendees: weeks[0] ? weeks[0].attendees : people.map(p => p.id) });
-      }} style={{ width: '100%', marginBottom: 20 }}>Log this night</Btn>
+      }} style={{ width: '100%', marginBottom: 14 }}>Log this night</Btn>
 
       <SectionTitle>Host rotation · up next</SectionTitle>
       <Card className="hide-scrollbar" style={{ display: 'flex', gap: 6, marginBottom: 18, overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }} pad={14}>
@@ -169,7 +169,27 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
       </Card>
 
       <SectionTitle action={<Btn variant="quiet" size="sm" onClick={() => goTo('history')}>See all</Btn>}>Recent nights</SectionTitle>
-      {weeks.slice(0, 3).map(w => <WeekCard key={w.id} week={w} store={store} onEdit={openEditor} onAvatar={openProfile} />)}
+      {weeks.slice(0, 4).map(w => {
+        const host = store.personById(w.hostId);
+        return <Card key={w.id} pad={12} style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {host ? <Avatar person={host} size={38} /> : <img src="/collective-failure.jpg" alt="Collective Failure" style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, objectFit: 'cover' }} />}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: 'var(--ink)', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{host ? host.name : 'Collective Failure'}</div>
+              <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>{fmtDateShort(w.date)}</div>
+            </div>
+            <button type="button" aria-label={`Edit night ${fmtDateShort(w.date)}`} onClick={() => openEditor(w)} style={{ border: 'none', background: 'none', color: 'var(--faint)', padding: 8, cursor: 'pointer' }}><Icon name="edit" size={16} /></button>
+          </div>
+          <div aria-label="Attendees" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 9 }}>
+            {w.attendees.map(id => {
+              const person = store.personById(id);
+              return <span key={id} title={person?.name || 'Former member'} aria-label={person?.name || 'Former member'} style={{ minWidth: 0, flexShrink: 1 }}><Avatar person={person} size={22} /></span>;
+            })}
+            {!w.attendees.length && <span style={{ color: 'var(--faint)', fontSize: 12 }}>No attendees recorded</span>}
+          </div>
+          <div title={w.note || 'Dinner not recorded'} style={{ marginTop: 7, color: 'var(--muted)', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Dinner · {w.note || 'Not recorded'}</div>
+        </Card>;
+      })}
       {weeks.length === 0 && <Card style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>No weeks logged yet.</Card>}
     </div>
   );
