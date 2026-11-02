@@ -1,3 +1,4 @@
+import { ActivityHistory } from './activity.jsx';
 import { useState, useRef, useEffect } from 'react';
 import { useStore } from './store.js';
 import { Icon, Btn } from './ui.jsx';
@@ -46,6 +47,7 @@ export default function App() {
   const [editor, setEditor] = useState({ open: false, editing: null, draft: null });
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [profile, setProfile] = useState({ open: false, person: null });
+  const [activityOpen, setActivityOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const scrollRef = useRef(null);
 
@@ -92,7 +94,7 @@ export default function App() {
   else if (tab === 'history') screen = <HistoryScreen store={store} openEditor={openEditor} openProfile={openProfile} />;
   else if (tab === 'wheel') screen = <WheelScreen store={store} />;
   else if (tab === 'games') screen = <GamesScreen store={store} />;
-  else screen = <StatsScreen store={store} openPeople={() => setPeopleOpen(true)} openProfile={openProfile} openShare={() => setShareOpen(true)} />;
+  else screen = <StatsScreen store={store} openPeople={() => setPeopleOpen(true)} openProfile={openProfile} openShare={() => setShareOpen(true)} openActivity={() => setActivityOpen(true)} />;
 
   return (
     <div style={{ ...vars, fontFamily: "ThmanyahSans, system-ui, sans-serif", height: '100dvh', width: '100%', maxWidth: 430, margin: '0 auto', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
@@ -106,6 +108,7 @@ export default function App() {
       <WeekEditor store={store} open={editor.open} editing={editor.editing} draft={editor.draft} onClose={closeEditor} />
       <PeopleManager store={store} open={peopleOpen} onClose={() => setPeopleOpen(false)} />
       <ProfileSheet store={store} person={profile.person} open={profile.open} onClose={() => setProfile(p => ({ ...p, open: false }))} openEditor={openEditor} />
+      {activityOpen && <ActivityHistory store={store} open onClose={() => setActivityOpen(false)} />}
       <ShareSheet store={store} open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );

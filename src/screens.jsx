@@ -314,7 +314,7 @@ function AwardCard({ award, onClickPerson }) {
   );
 }
 
-export function StatsScreen({ store, openPeople, openProfile, openShare }) {
+export function StatsScreen({ store, openPeople, openProfile, openShare, openActivity }) {
   const { people, weeks, fetches, games } = store;
   const [mode, setMode] = useState('hosted');
   const [winningCategory, setWinningCategory] = useState('all');
@@ -345,6 +345,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <PageHead title="Hall of Fame" sub="For legal reasons, this isn't personal..." />
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <button type="button" aria-label="Activity history" onClick={openActivity} style={{ border: 'none', background: 'var(--sunken)', width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink)', flexShrink: 0 }}><Icon name="history" size={20} /></button>
           <button onClick={openShare} style={{ border: 'none', background: 'var(--sunken)', width: 40, height: 40, borderRadius: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink)' }}>
             <Icon name="share" size={20} sw={2} />
@@ -529,7 +530,6 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
   const pickHost = (id) => { setHostId(id); setAtt(prev => new Set(prev).add(id)); };
 
   const save = async () => {
-    if (!isNew) return;
     if (store.saving) return;
     const payload = { date, hostId, attendees: [...att], note: note.trim() };
     const saved = editing?.id ? await store.updateWeek(editing.id, payload) : await store.addWeek(payload);

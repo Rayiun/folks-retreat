@@ -87,7 +87,7 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
     }
   };
   const save = async () => {
-    if (editing || !result || store.saving) return;
+    if (!result || store.saving) return;
     const saved = editing ? await store.updateGame(editing.id, result) : await store.addGame(result);
     if (saved) {
       if (!editing) {

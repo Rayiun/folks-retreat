@@ -12,6 +12,7 @@ test('screens and editors render with synthetic records, without production requ
     const screens = await server.ssrLoadModule('/src/screens.jsx');
     const { GamesScreen, MatchEditor, FullStandingsSheet } = await server.ssrLoadModule('/src/games.jsx');
     const { WheelScreen } = await server.ssrLoadModule('/src/wheel.jsx');
+    const { ActivityHistory } = await server.ssrLoadModule('/src/activity.jsx');
     const { ConfirmDelete } = await server.ssrLoadModule('/src/ui.jsx');
     const people = [{ id: 'a', name: 'Test Member', color: '#987', away: false }, { id: 'b', name: 'Other Member', color: '#789', away: false }];
     const store = { people, weeks: [], fetches: [], games: [], personById: id => people.find(p => p.id === id), saving: false };
@@ -21,6 +22,16 @@ test('screens and editors render with synthetic records, without production requ
     }
     const stats = renderToString(React.createElement(screens.StatsScreen, { store, openPeople: noop, openProfile: noop, openShare: noop }));
     assert.match(stats, />Winning<\/button>/);
+    const activity = renderToString(React.createElement(ActivityHistory, {
+      open: true, onClose: noop,
+      store: { ...store, fetches: [{ id: 'f-test', date: '2026-10-29', personId: 'a' }] },
+    }));
+    assert.match(activity, /Activity history/);
+    assert.match(activity, /Gatherings/);
+    assert.match(activity, /Matches/);
+    assert.match(activity, /Fetches/);
+    assert.match(activity, /Test Member/);
+    assert.match(stats, /aria-label="Activity history"/);
     const arena = renderToString(React.createElement(GamesScreen, { store }));
     assert.match(arena, /Arena stats filter/);
     assert.match(arena, /aria-pressed="true"[^>]*>All</);

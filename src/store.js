@@ -67,6 +67,7 @@ export function useStore() {
   const deleteWeek = id => mutate(() => writeRecord(supabase, 'weeks', 'delete', undefined, id));
   const addPerson = name => mutate(() => writeRecord(supabase, 'people', 'insert', { id: 'p' + crypto.randomUUID(), name, color: `oklch(0.70 0.115 ${HUES[Math.floor(Math.random() * HUES.length)]})` }));
   const addFetch = personId => mutate(() => writeRecord(supabase, 'fetches', 'insert', { id: 'f' + crypto.randomUUID(), person_id: personId, date: todayIso() }));
+  const updateFetch = (id, fetch) => mutate(() => writeRecord(supabase, 'fetches', 'update', { person_id: fetch.personId, date: fetch.date }, id));
   const deleteFetch = id => mutate(() => writeRecord(supabase, 'fetches', 'delete', undefined, id));
   const addGame = game => mutate(() => writeRecord(supabase, 'games', 'insert', { id: 'g' + crypto.randomUUID(), ...gameRecord(game) }));
   const updateGame = (id, game) => mutate(() => writeRecord(supabase, 'games', 'update', gameRecord(game), id));
@@ -84,5 +85,5 @@ export function useStore() {
     });
   };
   // No member deletion or bulk reset: historical records must remain intact.
-  return { ...state, reload, personById, addWeek, updateWeek, deleteWeek, addPerson, addFetch, deleteFetch, addGame, updateGame, deleteGame, toggleAway };
+  return { ...state, reload, personById, addWeek, updateWeek, deleteWeek, addPerson, addFetch, updateFetch, deleteFetch, addGame, updateGame, deleteGame, toggleAway };
 }
