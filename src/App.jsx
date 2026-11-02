@@ -80,7 +80,7 @@ export default function App() {
   };
 
   const openEditor = (weekOrDraft) => {
-    if (weekOrDraft && weekOrDraft.id) setEditor({ open: true, editing: weekOrDraft, draft: null });
+    if (weekOrDraft && weekOrDraft.id) return;
     else setEditor({ open: true, editing: null, draft: weekOrDraft || null });
   };
   const closeEditor = () => setEditor(e => ({ ...e, open: false }));

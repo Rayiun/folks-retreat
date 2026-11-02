@@ -1,7 +1,7 @@
 import { memberColor } from './theme.js';
 import { useState, useRef, useEffect } from 'react';
 import { lastFetcher, initials, fmtDateShort } from './store.js';
-import { Avatar, Icon, Sheet, Btn, Segment, ConfirmDelete } from './ui.jsx';
+import { Avatar, Icon, Sheet, Btn, Segment } from './ui.jsx';
 
 let _actx = null;
 function ensureCtx() {
@@ -106,7 +106,6 @@ export function WheelScreen({ store }) {
   const [showResult, setShowResult] = useState(false);
   const [fairMode, setFairMode] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [deletingFetch, setDeletingFetch] = useState(null);
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const safetyRef = useRef(null);
@@ -286,17 +285,14 @@ export function WheelScreen({ store }) {
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-soft)',
                   padding: '3px 9px', borderRadius: 99 }}>{pct}%</span>
-                <button onClick={() => setDeletingFetch(f.id)} style={{ border: 'none', background: 'none', cursor: 'pointer',
-                  padding: 4, color: 'var(--faint)', display: 'flex', flexShrink: 0 }}>
-                  <Icon name="trash" size={16} sw={2} />
-                </button>
+
               </div>
             );
           })}
         </div>
       )}
 
-      <ConfirmDelete open={!!deletingFetch} onClose={() => setDeletingFetch(null)} onConfirm={() => store.deleteFetch(deletingFetch)} />
+
 
       <Sheet open={showResult} onClose={store.saving ? undefined : () => setShowResult(false)}>
         {winner && (

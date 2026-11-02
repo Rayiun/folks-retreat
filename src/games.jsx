@@ -2,7 +2,7 @@ import { entryFromGame, toggleParticipant, buildMatchResult } from './match-entr
 import { todayIso } from './dates.js';
 import { useState, useEffect, useEffectEvent } from 'react';
 import { fmtDateShort, fmtDate, matchSides, gameStats, recentGames, playerGameRecord, playerMatches, rivalryStats } from './store.js';
-import { Avatar, Icon, Sheet, Btn, Card, Segment, ConfirmDelete } from './ui.jsx';
+import { Avatar, Icon, Sheet, Btn, Card, Segment } from './ui.jsx';
 import { SectionTitle, DateField } from './screens.jsx';
 
 const TEAM_B_COLOR = 'oklch(0.62 0.13 245)';
@@ -67,13 +67,11 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const [date, setDate] = useState(editing?.date || todayIso());
   const [entry, setEntry] = useState(() => entryFromGame(editing));
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const prepareEditor = useEffectEvent(() => {
     setCat(editing?.cat || lastMatchCategory(initialCat));
     setDate(editing?.date || todayIso());
     setEntry(entryFromGame(editing));
     setDetailsOpen(false);
-    setConfirmOpen(false);
   });
   useEffect(() => { if (open) prepareEditor(); }, [open]);
 
@@ -89,7 +87,7 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
     }
   };
   const save = async () => {
-    if (!result || store.saving) return;
+    if (editing || !result || store.saving) return;
     const saved = editing ? await store.updateGame(editing.id, result) : await store.addGame(result);
     if (saved) {
       if (!editing) {
@@ -123,10 +121,7 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
         </div>
         <Btn icon="check" size="lg" disabled={!result || store.saving} onClick={save} style={{ width: '100%' }}>{store.saving ? 'Saving…' : 'Save result'}</Btn>
       </fieldset>
-      {editing && <>
-        <ConfirmDelete open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={async () => { const deleted = await store.deleteGame(editing.id); if (deleted) onClose(); return deleted; }} />
-        <Btn variant="danger" disabled={store.saving} size="sm" icon="trash" onClick={() => setConfirmOpen(true)} style={{ width: '100%', marginTop: 10 }}>Delete this match</Btn>
-      </>}
+
     </Sheet>
   );
 }
@@ -250,7 +245,7 @@ function MetaRow({ label, value, last }) {
   );
 }
 
-function GameDetailSheet({ store, game, open, onClose, onPlayer, onEdit }) {
+function GameDetailSheet({ store, game, open, onClose, onPlayer }) {
   if (!game) return <Sheet open={open} onClose={onClose} title="" />;
   const { players, winners } = matchSides(game);
   const losers = players.filter(id => !winners.includes(id));
@@ -295,9 +290,7 @@ function GameDetailSheet({ store, game, open, onClose, onPlayer, onEdit }) {
         <MetaRow label="Players" value={players.length} last />
       </Card>
 
-      <Btn variant="ghost" icon="edit" onClick={() => onEdit(game)} style={{ width: '100%', marginBottom: 8 }}>
-        Edit match
-      </Btn>
+
     </Sheet>
   );
 }
@@ -542,7 +535,6 @@ export function GamesScreen({ store }) {
   const [view, setView] = useState('standings');
   const [allResults, setAllResults] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editingGame, setEditingGame] = useState(null);
   const [player, setPlayer] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [detailGame, setDetailGame] = useState(null);
@@ -550,7 +542,7 @@ export function GamesScreen({ store }) {
 
   const openPlayer = (p) => { if (p) { setPlayer(p); setPlayerOpen(true); } };
   const openDetail = (g) => { setDetailGame(g); setDetailOpen(true); };
-  const openEdit = (g) => { setDetailOpen(false); setEditingGame(g); setEditorOpen(true); };
+
   const standings = gameStats(people, games, cat);
   const recent = recentGames(games, cat);
   const ranks = [...new Set(standings.map(entry => entry.won))];
@@ -606,8 +598,8 @@ export function GamesScreen({ store }) {
         cat={cat} onCategoryChange={setCat} onPlayer={openPlayer} />
 
       <GameDetailSheet store={store} game={detailGame} open={detailOpen} onClose={() => setDetailOpen(false)}
-        onPlayer={p => { setDetailOpen(false); openPlayer(p); }} onEdit={openEdit} />
-      <MatchEditor store={store} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingGame(null); }} initialCat={cat === 'all' ? 'board' : cat} editing={editingGame} />
+        onPlayer={p => { setDetailOpen(false); openPlayer(p); }} />
+      <MatchEditor store={store} open={editorOpen} onClose={() => setEditorOpen(false)} initialCat={cat === 'all' ? 'board' : cat} />
       <GamePlayerSheet store={store} person={player} open={playerOpen} onClose={() => setPlayerOpen(false)} />
     </div>
   );

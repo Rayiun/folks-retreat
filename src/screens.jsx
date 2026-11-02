@@ -5,7 +5,7 @@ import {
   fmtDate, fmtDateShort, initials,
   hostStats, fetchStats, gameStats, lastFetcher, attendanceInfo, rotationOrder, awards, matchSides, bonusHostedDates,
 } from './store.js';
-import { Avatar, AvatarStack, Icon, Sheet, Btn, Card, Segment, Stat, ConfirmDelete } from './ui.jsx';
+import { Avatar, Icon, Sheet, Btn, Card, Segment } from './ui.jsx';
 
 export function SectionTitle({ children, action }) {
   return (
@@ -26,58 +26,77 @@ export function PageHead({ title, sub }) {
 }
 
 function nightMVP(date, games, personById) {
-  const wins = {};
-  (games || []).filter(g => g.date === date).forEach(g => {
-    const winners = g.format === 'teams'
-      ? (g.winner === 'A' ? g.teamA : g.teamB) || []
-      : g.winnerId ? [g.winnerId] : [];
-    winners.forEach(id => { wins[id] = (wins[id] || 0) + 1; });
+  const wins = new Map();
+  (games || []).filter(game => game.date === date).forEach(game => {
+    matchSides(game).winners.forEach(id => wins.set(id, (wins.get(id) || 0) + 1));
   });
-  const sorted = Object.entries(wins).sort((a, b) => b[1] - a[1]);
-  if (!sorted.length || sorted[0][1] < 1) return null;
-  const topWins = sorted[0][1];
-  const people = sorted.filter(([, w]) => w === topWins).map(([id]) => personById(id)).filter(Boolean);
-  return { people, wins: topWins };
+  const most = Math.max(0, ...wins.values());
+  if (!most) return [];
+  return [...wins].filter(([, count]) => count === most).map(([id]) => personById(id)).filter(Boolean);
 }
 
-function WeekCard({ week, store, onEdit, onAvatar }) {
+function WeekCard({ week, store, onEdit }) {
   const host = store.personById(week.hostId);
-  const mvp = nightMVP(week.date, store.games, store.personById);
-  return (
-    <Card onClick={() => onEdit(week)} style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }} pad={14}>
-      {host ? (
-        <div onClick={onAvatar ? (e) => { e.stopPropagation(); onAvatar(host); } : undefined} style={{ cursor: onAvatar ? 'pointer' : 'default' }}>
-          <Avatar person={host} size={46} />
-        </div>
-      ) : (
-        <img src="/collective-failure.jpg" alt="" style={{ width: 46, height: 46, borderRadius: 12, flexShrink: 0, objectFit: 'cover' }} />
-      )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 16, letterSpacing: -0.2 }}>
-          {host ? host.name : 'Collective Failure'}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, color: 'var(--muted)', fontSize: 13 }}>
-          <Icon name="calendar" size={13} sw={2} /> {fmtDate(week.date)}
-        </div>
-        {week.note ? (
-          <div style={{ marginTop: 5, color: 'var(--faint)', fontSize: 12.5, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>"{week.note}"</div>
-        ) : null}
-        {mvp && (
-          <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--accent-soft)', borderRadius: 99, padding: '3px 9px 3px 5px' }}>
-            <div style={{ display: 'flex' }}>
-              {mvp.people.map((p, i) => (
-                <span key={p.id} style={{ marginLeft: i === 0 ? 0 : -6 }}><Avatar person={p} size={18} /></span>
-              ))}
+  const mvps = nightMVP(week.date, store.games, store.personById);
+  return <button type="button" onClick={() => onEdit(week)} aria-label={`View night ${fmtDateShort(week.date)}`} style={{ display: 'block', width: '100%', textAlign: 'left', padding: 12, marginBottom: 8, borderRadius: 22, background: 'var(--surface)', border: 'var(--card-border)', boxShadow: 'var(--card-shadow)', font: 'inherit', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {host ? <Avatar person={host} size={38} /> : <img src="/collective-failure.jpg" alt="Collective Failure" style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, objectFit: 'cover' }} />}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: 'var(--ink)', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{host ? host.name : 'Collective Failure'}</div>
+              <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>{fmtDateShort(week.date)}</div>
             </div>
-            <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent)' }}>MVP · {mvp.wins} {mvp.wins === 1 ? 'win' : 'wins'}{mvp.people.length > 1 ? ' each' : ''}</span>
+            {mvps.length > 0 && <span aria-label={`MVP: ${mvps.map(person => person.name).join(', ')}`} title={`MVP: ${mvps.map(person => person.name).join(', ')}`} style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--accent)', flexShrink: 0 }}>
+              <Icon name="trophy" size={14} />
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                {mvps.slice(0, 3).map((person, i) => <span key={person.id} style={{ marginLeft: i ? -7 : 0, borderRadius: '50%', boxShadow: '0 0 0 2px var(--surface)' }}><Avatar person={person} size={25} /></span>)}
+              </span>
+              {mvps.length > 3 && <span style={{ fontSize: 11 }}>+{mvps.length - 3}</span>}
+            </span>}
+
+            <Icon name="chevronRight" size={16} color="var(--faint)" />
           </div>
-        )}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
-        <AvatarStack ids={week.attendees} personById={store.personById} max={4} size={26} />
-        <span style={{ fontSize: 11.5, color: 'var(--faint)', fontWeight: 600 }}>{week.attendees.length} attended</span>
-      </div>
-    </Card>
+          <div aria-label="Attendees" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 9 }}>
+            {week.attendees.map(id => {
+              const person = store.personById(id);
+              return <span key={id} title={person?.name || 'Former member'} aria-label={person?.name || 'Former member'} style={{ minWidth: 0, flexShrink: 1 }}><Avatar person={person} size={22} /></span>;
+            })}
+            {!week.attendees.length && <span style={{ color: 'var(--faint)', fontSize: 12 }}>No attendees recorded</span>}
+          </div>
+          <div title={week.note || 'Dinner not recorded'} style={{ marginTop: 7, color: 'var(--muted)', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Dinner · {week.note || 'Not recorded'}</div>
+
+
+        </button>;
+}
+
+function NightSummary({ store, nightId, onClose }) {
+  const selectedNight = store.weeks.find(w => w.id === nightId);
+  const selectedHost = selectedNight ? store.personById(selectedNight.hostId) : null;
+  const selectedMVPs = selectedNight ? nightMVP(selectedNight.date, store.games, store.personById) : [];
+  return (
+      <Sheet open={!!selectedNight} onClose={onClose} title="Night summary">
+        {selectedNight && <div style={{ paddingBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+            {selectedHost ? <Avatar person={selectedHost} size={46} /> : <img src="/collective-failure.jpg" alt="Collective Failure" style={{ width: 46, height: 46, borderRadius: 13, objectFit: 'cover' }} />}
+            <div><div style={{ color: 'var(--ink)', fontSize: 18, fontWeight: 600 }}>{selectedHost?.name || 'Collective Failure'}</div><div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 3 }}>{fmtDate(selectedNight.date)}</div></div>
+          </div>
+          <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 10 }}>Attended · {selectedNight.attendees.length}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 14px' }}>
+            {selectedNight.attendees.map(id => {
+              const person = store.personById(id);
+              const isMVP = selectedMVPs.some(mvp => mvp.id === id);
+              return <span key={id} aria-label={`${person?.name || 'Former member'}${isMVP ? ', MVP' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: 'var(--ink)', fontSize: 13 }}>
+                <span style={{ position: 'relative', display: 'inline-flex' }}>
+                  <Avatar person={person} size={28} />
+                  {isMVP && <span title="MVP" style={{ position: 'absolute', right: -4, bottom: -3, display: 'flex', padding: 2, borderRadius: '50%', background: 'var(--surface)', color: 'var(--accent)' }}><Icon name="trophy" size={12} /></span>}
+                </span>
+                {person?.name || 'Former member'}
+              </span>;
+            })}
+            {!selectedNight.attendees.length && <span style={{ color: 'var(--muted)', fontSize: 13 }}>No attendees recorded</span>}
+          </div>
+          <div style={{ marginTop: 18, padding: 14, borderRadius: 14, background: 'var(--sunken)' }}><div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 5 }}>Dinner</div><div style={{ color: 'var(--ink)', fontSize: 14, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{selectedNight.note || 'Not recorded'}</div></div>
+        </div>}
+      </Sheet>
   );
 }
 
@@ -87,8 +106,7 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
   const lf = lastFetcher(fetches, store.personById);
   const rotation = rotationOrder(people, weeks);
   const lastWeek = weeks[0];
-  const selectedNight = weeks.find(w => w.id === nightId);
-  const selectedHost = selectedNight ? store.personById(selectedNight.hostId) : null;
+
 
   return (
     <div style={{ padding: '4px 18px 16px' }}>
@@ -172,44 +190,8 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
       </Card>
 
       <SectionTitle action={<Btn variant="quiet" size="sm" onClick={() => goTo('history')}>See all</Btn>}>Recent nights</SectionTitle>
-      {weeks.slice(0, 4).map(w => {
-        const host = store.personById(w.hostId);
-        return <button key={w.id} type="button" onClick={() => setNightId(w.id)} aria-label={`View night ${fmtDateShort(w.date)}`} style={{ display: 'block', width: '100%', textAlign: 'left', padding: 12, marginBottom: 8, borderRadius: 22, background: 'var(--surface)', border: 'var(--card-border)', boxShadow: 'var(--card-shadow)', font: 'inherit', cursor: 'pointer' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {host ? <Avatar person={host} size={38} /> : <img src="/collective-failure.jpg" alt="Collective Failure" style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, objectFit: 'cover' }} />}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: 'var(--ink)', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{host ? host.name : 'Collective Failure'}</div>
-              <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>{fmtDateShort(w.date)}</div>
-            </div>
-            <Icon name="chevronRight" size={16} color="var(--faint)" />
-          </div>
-          <div aria-label="Attendees" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 9 }}>
-            {w.attendees.map(id => {
-              const person = store.personById(id);
-              return <span key={id} title={person?.name || 'Former member'} aria-label={person?.name || 'Former member'} style={{ minWidth: 0, flexShrink: 1 }}><Avatar person={person} size={22} /></span>;
-            })}
-            {!w.attendees.length && <span style={{ color: 'var(--faint)', fontSize: 12 }}>No attendees recorded</span>}
-          </div>
-          <div title={w.note || 'Dinner not recorded'} style={{ marginTop: 7, color: 'var(--muted)', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Dinner · {w.note || 'Not recorded'}</div>
-        </button>;
-      })}
-      <Sheet open={!!selectedNight} onClose={() => setNightId(null)} title="Night summary">
-        {selectedNight && <div style={{ paddingBottom: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-            {selectedHost ? <Avatar person={selectedHost} size={46} /> : <img src="/collective-failure.jpg" alt="Collective Failure" style={{ width: 46, height: 46, borderRadius: 13, objectFit: 'cover' }} />}
-            <div><div style={{ color: 'var(--ink)', fontSize: 18, fontWeight: 600 }}>{selectedHost?.name || 'Collective Failure'}</div><div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 3 }}>{fmtDate(selectedNight.date)}</div></div>
-          </div>
-          <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 10 }}>Attended · {selectedNight.attendees.length}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 14px' }}>
-            {selectedNight.attendees.map(id => {
-              const person = store.personById(id);
-              return <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: 'var(--ink)', fontSize: 13 }}><Avatar person={person} size={28} />{person?.name || 'Former member'}</span>;
-            })}
-            {!selectedNight.attendees.length && <span style={{ color: 'var(--muted)', fontSize: 13 }}>No attendees recorded</span>}
-          </div>
-          <div style={{ marginTop: 18, padding: 14, borderRadius: 14, background: 'var(--sunken)' }}><div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 5 }}>Dinner</div><div style={{ color: 'var(--ink)', fontSize: 14, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{selectedNight.note || 'Not recorded'}</div></div>
-        </div>}
-      </Sheet>
+      {weeks.slice(0, 2).map(w => <WeekCard key={w.id} week={w} store={store} onEdit={night => setNightId(night.id)} />)}
+      <NightSummary store={store} nightId={nightId} onClose={() => setNightId(null)} />
       {weeks.length === 0 && <Card style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>No weeks logged yet.</Card>}
     </div>
   );
@@ -274,7 +256,8 @@ function CalendarView({ store, openEditor }) {
   );
 }
 
-export function HistoryScreen({ store, openEditor, openProfile }) {
+export function HistoryScreen({ store, openEditor }) {
+  const [nightId, setNightId] = useState(null);
   const { weeks } = store;
   const [view, setView] = useState('list');
   const groups = {};
@@ -297,15 +280,16 @@ export function HistoryScreen({ store, openEditor, openProfile }) {
           <div style={{ color: 'var(--muted)', fontSize: 15 }}>Nothing logged yet.<br />Tap "Log a night" to start.</div>
         </Card>
       ) : view === 'calendar' ? (
-        <CalendarView store={store} openEditor={openEditor} />
+        <CalendarView store={store} openEditor={night => setNightId(night.id)} />
       ) : (
         Object.entries(groups).map(([month, ws]) => (
           <div key={month} style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10, paddingLeft: 4 }}>{month}</div>
-            {ws.map(w => <WeekCard key={w.id} week={w} store={store} onEdit={openEditor} onAvatar={openProfile} />)}
+            {ws.map(w => <WeekCard key={w.id} week={w} store={store} onEdit={night => setNightId(night.id)} />)}
           </div>
         ))
       )}
+      <NightSummary store={store} nightId={nightId} onClose={() => setNightId(null)} />
     </div>
   );
 }
@@ -313,25 +297,18 @@ export function HistoryScreen({ store, openEditor, openProfile }) {
 function AwardCard({ award, onClickPerson }) {
   const people = award.people || [];
   return (
-    <div style={{ border: 'var(--card-border)', background: 'var(--surface)', borderRadius: 18, padding: '14px 12px',
-      width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center',
-      boxShadow: 'var(--card-shadow)', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--accent)' }}>
-        <Icon name={award.icon} size={14} sw={2.2} />
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>{award.label}</span>
+    <div style={{ background: 'var(--surface)', border: 'var(--card-border)', borderRadius: 14, padding: 11, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--muted)', fontSize: 11, marginBottom: 8 }}>
+        <Icon name={award.icon} size={13} color="var(--accent)" />{award.label}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        {people.map((p, i) => (
-          <button key={p.id} onClick={() => onClickPerson(p)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', marginLeft: i === 0 ? 0 : -10 }}>
-            <Avatar person={p} size={people.length > 1 ? 34 : 44} />
-          </button>
-        ))}
-      </div>
-      <div>
-        <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 13.5, letterSpacing: -0.2 }}>
-          {people.map(p => p.name.split(' ').pop()).join(', ')}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', flexShrink: 0 }}>
+          {people.map((p, i) => <button key={p.id} type="button" aria-label={`Open ${p.name} profile`} onClick={() => onClickPerson(p)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', marginLeft: i ? -9 : 0, borderRadius: '50%', boxShadow: '0 0 0 2px var(--surface)' }}><Avatar person={p} size={26} /></button>)}
         </div>
-        <div style={{ color: 'var(--faint)', fontSize: 11.5, marginTop: 1 }}>{award.sub}</div>
+        <div style={{ minWidth: 0 }}>
+          <div title={people.map(p => p.name).join(', ')} style={{ color: 'var(--ink)', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{people.map(p => p.name).join(', ') || '—'}</div>
+          <div style={{ color: 'var(--muted)', fontSize: 11 }}>{award.sub}</div>
+        </div>
       </div>
     </div>
   );
@@ -360,7 +337,7 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
     rows.sort((a, b) => b.val - a.val);
   }
   const max = Math.max(1, ...rows.map(r => r.val));
-  const barColor = mode === 'hosted' ? 'var(--accent)' : mode === 'attended' ? 'var(--good)' : mode === 'winning' ? 'var(--accent)' : 'oklch(0.66 0.13 295)';
+  const barColor = 'var(--accent)';
   const medals = ['oklch(0.78 0.14 85)', 'oklch(0.74 0.02 250)', 'oklch(0.62 0.11 50)'];
 
   return (
@@ -379,11 +356,11 @@ export function StatsScreen({ store, openPeople, openProfile, openShare }) {
         </div>
       </div>
 
-      <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px 0 18px' }} pad={16}>
-        <Stat value={350 + weeks.length} label="Nights" color="var(--accent)" />
-      </Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted)', fontSize: 12, margin: '0 0 12px' }}>
+        <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{350 + weeks.length}</span> nights together
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: '2px', margin: '0 -2px 18px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 18 }}>
         {aw.map(a => <AwardCard key={a.key} award={a} onClickPerson={openProfile} />)}
       </div>
 
@@ -539,7 +516,6 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
   const [hostId, setHostId] = useState(seed.hostId);
   const [att, setAtt] = useState(() => new Set(seed.attendees || []));
   const [note, setNote] = useState(seed.note || '');
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -553,16 +529,13 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
   const pickHost = (id) => { setHostId(id); setAtt(prev => new Set(prev).add(id)); };
 
   const save = async () => {
+    if (!isNew) return;
     if (store.saving) return;
     const payload = { date, hostId, attendees: [...att], note: note.trim() };
     const saved = editing?.id ? await store.updateWeek(editing.id, payload) : await store.addWeek(payload);
     if (saved) onClose();
   };
-  const del = async () => {
-    const deleted = editing?.id && await store.deleteWeek(editing.id);
-    if (deleted) onClose();
-    return deleted;
-  };
+
 
   return (
     <Sheet open={open} onClose={store.saving ? undefined : onClose} title={isNew ? 'Log a night' : 'Edit night'}>
@@ -611,13 +584,12 @@ export function WeekEditor({ store, editing, draft, open, onClose }) {
         background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'inherit', fontSize: 15.5, marginBottom: 24 }} />
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        {!isNew && <Btn variant="danger" icon="trash" onClick={() => setConfirmDelete(true)}>Delete</Btn>}
         <div style={{ flex: 1 }} />
         <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
         <Btn icon="check" disabled={store.saving} onClick={save}>{store.saving ? 'Saving…' : 'Save'}</Btn>
       </div>
       </fieldset>
-      <ConfirmDelete open={confirmDelete} onClose={() => setConfirmDelete(false)} onConfirm={del} />
+
     </Sheet>
   );
 }
@@ -679,23 +651,7 @@ export function ProfileSheet({ store, person: personProp, open, onClose, openEdi
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <MiniStat value={fetched} label="Fetched" color="oklch(0.66 0.13 295)" />
       </div>
-      <button disabled={store.saving} onClick={() => store.toggleAway(person.id)} style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          border: 'none', background: isAway ? 'var(--accent-soft)' : 'var(--sunken)',
-          borderRadius: 16, padding: '14px 16px', cursor: 'pointer', marginBottom: 18,
-          transition: 'background .18s',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>✈️</span>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: isAway ? 'var(--accent)' : 'var(--ink)' }}>Away</div>
-              <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 1 }}>Skip from host rotation</div>
-            </div>
-          </div>
-          <div style={{ width: 44, height: 26, borderRadius: 13, background: isAway ? 'var(--accent)' : 'var(--line)', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
-            <div style={{ position: 'absolute', top: 3, left: isAway ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }} />
-          </div>
-        </button>
+      {isAway && <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 18 }}>✈️ Away · skipped in host rotation</div>}
 
       <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Nights · {theirWeeks.length}</div>
       {theirWeeks.map(w => (
