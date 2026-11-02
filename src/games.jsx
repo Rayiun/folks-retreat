@@ -54,14 +54,22 @@ function ResultPlayers({ people, selected, side, onToggle }) {
   );
 }
 
+function lastMatchCategory(fallback) {
+  try {
+    const saved = localStorage.getItem('fr_match_category');
+    if (saved === 'fifa' || saved === 'board') return saved;
+  } catch { /* The editor still works if local storage is unavailable. */ }
+  return fallback || 'board';
+}
+
 export function MatchEditor({ store, open, onClose, initialCat, editing }) {
-  const [cat, setCat] = useState(editing?.cat || initialCat || 'board');
+  const [cat, setCat] = useState(() => editing?.cat || lastMatchCategory(initialCat));
   const [date, setDate] = useState(editing?.date || todayIso());
   const [entry, setEntry] = useState(() => entryFromGame(editing));
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const prepareEditor = useEffectEvent(() => {
-    setCat(editing?.cat || initialCat || 'board');
+    setCat(editing?.cat || lastMatchCategory(initialCat));
     setDate(editing?.date || todayIso());
     setEntry(entryFromGame(editing));
     setDetailsOpen(false);
@@ -74,16 +82,27 @@ export function MatchEditor({ store, open, onClose, initialCat, editing }) {
   const people = [...store.people, ...missingIds.map(id => ({ id, name: 'Former member', color: 'var(--muted)' }))];
   const result = buildMatchResult({ cat, date, ...entry }, editing);
   const toggle = (side, id) => setEntry(current => toggleParticipant(current, side, id));
+  const chooseCategory = value => {
+    setCat(value);
+    if (!editing) {
+      try { localStorage.setItem('fr_match_category', value); } catch { /* Keep the current selection in memory. */ }
+    }
+  };
   const save = async () => {
     if (!result || store.saving) return;
     const saved = editing ? await store.updateGame(editing.id, result) : await store.addGame(result);
-    if (saved) onClose();
+    if (saved) {
+      if (!editing) {
+        try { localStorage.setItem('fr_match_category', cat); } catch { /* Saving a match does not require local storage. */ }
+      }
+      onClose();
+    }
   };
 
   return (
     <Sheet open={open} onClose={store.saving ? undefined : onClose} title={editing ? 'Edit match' : 'Log a match'}>
       <fieldset disabled={store.saving} className="editor-fields">
-        <Segment value={cat} options={[{ value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Others' }]} onChange={setCat} />
+        <Segment value={cat} options={[{ value: 'fifa', label: 'FIFA' }, { value: 'board', label: 'Others' }]} onChange={chooseCategory} />
         <div style={{ margin: '22px 0 12px' }}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 19, fontWeight: 700, color: 'var(--ink)' }}>Who won? <span style={{ color: 'var(--accent)', fontSize: 14 }}>{entry.winners.length || ''}</span></div>
           <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 3 }}>Choose one or more players.</div>

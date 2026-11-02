@@ -82,10 +82,13 @@ function WeekCard({ week, store, onEdit, onAvatar }) {
 }
 
 export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggleTheme }) {
+  const [nightId, setNightId] = useState(null);
   const { people, weeks, fetches } = store;
   const lf = lastFetcher(fetches, store.personById);
   const rotation = rotationOrder(people, weeks);
   const lastWeek = weeks[0];
+  const selectedNight = weeks.find(w => w.id === nightId);
+  const selectedHost = selectedNight ? store.personById(selectedNight.hostId) : null;
 
   return (
     <div style={{ padding: '4px 18px 16px' }}>
@@ -171,14 +174,14 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
       <SectionTitle action={<Btn variant="quiet" size="sm" onClick={() => goTo('history')}>See all</Btn>}>Recent nights</SectionTitle>
       {weeks.slice(0, 4).map(w => {
         const host = store.personById(w.hostId);
-        return <Card key={w.id} pad={12} style={{ marginBottom: 8 }}>
+        return <button key={w.id} type="button" onClick={() => setNightId(w.id)} aria-label={`View night ${fmtDateShort(w.date)}`} style={{ display: 'block', width: '100%', textAlign: 'left', padding: 12, marginBottom: 8, borderRadius: 22, background: 'var(--surface)', border: 'var(--card-border)', boxShadow: 'var(--card-shadow)', font: 'inherit', cursor: 'pointer' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {host ? <Avatar person={host} size={38} /> : <img src="/collective-failure.jpg" alt="Collective Failure" style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, objectFit: 'cover' }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: 'var(--ink)', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{host ? host.name : 'Collective Failure'}</div>
               <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>{fmtDateShort(w.date)}</div>
             </div>
-            <button type="button" aria-label={`Edit night ${fmtDateShort(w.date)}`} onClick={() => openEditor(w)} style={{ border: 'none', background: 'none', color: 'var(--faint)', padding: 8, cursor: 'pointer' }}><Icon name="edit" size={16} /></button>
+            <Icon name="chevronRight" size={16} color="var(--faint)" />
           </div>
           <div aria-label="Attendees" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 9 }}>
             {w.attendees.map(id => {
@@ -188,8 +191,25 @@ export function HomeScreen({ store, openEditor, goTo, openProfile, isDark, toggl
             {!w.attendees.length && <span style={{ color: 'var(--faint)', fontSize: 12 }}>No attendees recorded</span>}
           </div>
           <div title={w.note || 'Dinner not recorded'} style={{ marginTop: 7, color: 'var(--muted)', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Dinner · {w.note || 'Not recorded'}</div>
-        </Card>;
+        </button>;
       })}
+      <Sheet open={!!selectedNight} onClose={() => setNightId(null)} title="Night summary">
+        {selectedNight && <div style={{ paddingBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+            {selectedHost ? <Avatar person={selectedHost} size={46} /> : <img src="/collective-failure.jpg" alt="Collective Failure" style={{ width: 46, height: 46, borderRadius: 13, objectFit: 'cover' }} />}
+            <div><div style={{ color: 'var(--ink)', fontSize: 18, fontWeight: 600 }}>{selectedHost?.name || 'Collective Failure'}</div><div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 3 }}>{fmtDate(selectedNight.date)}</div></div>
+          </div>
+          <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 10 }}>Attended · {selectedNight.attendees.length}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 14px' }}>
+            {selectedNight.attendees.map(id => {
+              const person = store.personById(id);
+              return <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: 'var(--ink)', fontSize: 13 }}><Avatar person={person} size={28} />{person?.name || 'Former member'}</span>;
+            })}
+            {!selectedNight.attendees.length && <span style={{ color: 'var(--muted)', fontSize: 13 }}>No attendees recorded</span>}
+          </div>
+          <div style={{ marginTop: 18, padding: 14, borderRadius: 14, background: 'var(--sunken)' }}><div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 5 }}>Dinner</div><div style={{ color: 'var(--ink)', fontSize: 14, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{selectedNight.note || 'Not recorded'}</div></div>
+        </div>}
+      </Sheet>
       {weeks.length === 0 && <Card style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>No weeks logged yet.</Card>}
     </div>
   );
